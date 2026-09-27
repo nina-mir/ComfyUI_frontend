@@ -48,6 +48,11 @@ import { useAssetsStore } from '@/stores/assetsStore'
 import { getFilenameDetails } from '@/utils/formatUtil'
 import { useWorkflowStore } from '@/platform/workflow/management/stores/workflowStore'
 import { StorageKeys } from '@/platform/workflow/persistence/base/storageKeys'
+import { unsafeStorageScope } from '@/platform/workflow/persistence/testUtils/storageScope'
+import {
+  setStorageIdentity,
+  setStorageWorkspaceId
+} from '@/platform/workflow/persistence/base/storageIO'
 import type { LoadedComfyWorkflow } from '@/platform/workflow/management/stores/workflowStore'
 import { reportError } from '@/platform/telemetry/reportError'
 // eslint-disable-next-line import-x/no-restricted-paths
@@ -66,6 +71,9 @@ import {
   createMockChangeTracker,
   createMockLGraphNode
 } from '@/utils/__tests__/litegraphTestUtils'
+
+const scope = unsafeStorageScope
+const agentTestScope = scope('account-a:personal')
 
 const getServerFeature = vi.hoisted(() =>
   vi.fn((_name: string, defaultValue?: unknown) => defaultValue)
@@ -283,6 +291,12 @@ function syncFakeSelection() {
 }
 
 beforeEach(() => {
+  setStorageIdentity('account-a')
+  setStorageWorkspaceId('personal')
+  sessionStorage.setItem(
+    'Comfy.Workspace.Current',
+    JSON.stringify({ type: 'personal', id: null })
+  )
   let clientMessageIds = 0
   nextClientMessageId.mockImplementation(
     () => `client-message-${++clientMessageIds}`
@@ -5314,7 +5328,7 @@ describe('AgentPanelRoot workflow binding', () => {
       references: [{ path: 'workflows/other.json', workflowId: 'wf-other' }]
     })
     mockMessagesEndpoint('wf-other', [{ id: 'wf-other', name: 'other' }])
-    localStorage.setItem(StorageKeys.agentThread('personal'), 'th-restored')
+    localStorage.setItem(StorageKeys.agentThread(agentTestScope), 'th-restored')
     const defaultFetch = vi.mocked(fetch).getMockImplementation()
     assert.exists(defaultFetch)
     let finishHistory = (_response: Response) => {}
@@ -5860,7 +5874,7 @@ describe('AgentPanelRoot workflow binding', () => {
       await workflowStore.closeWorkflow(saved)
       useAgentConversationStore().setThreadId(previous)
       if (previous)
-        localStorage.setItem(StorageKeys.agentThread('personal'), previous)
+        localStorage.setItem(StorageKeys.agentThread(agentTestScope), previous)
       let finishOpening = () => {}
       const opening = new Promise<boolean>((resolve) => {
         finishOpening = () => resolve(false)
@@ -5926,9 +5940,9 @@ describe('AgentPanelRoot workflow binding', () => {
         screen.queryByText('Earlier portrait request')
       ).not.toBeInTheDocument()
       expect(useAgentChatHistoryStore().activeId).toBe(previous)
-      expect(localStorage.getItem(StorageKeys.agentThread('personal'))).toBe(
-        previous
-      )
+      expect(
+        localStorage.getItem(StorageKeys.agentThread(agentTestScope))
+      ).toBe(previous)
       if (outcome === 'pending') {
         await userEvent.click(
           screen.getByRole('button', { name: 'Back to previous chat' })
@@ -5948,9 +5962,9 @@ describe('AgentPanelRoot workflow binding', () => {
       )
       await screen.findAllByText('Earlier portrait request')
       expect(useAgentChatHistoryStore().activeId).toBe('th-history')
-      expect(localStorage.getItem(StorageKeys.agentThread('personal'))).toBe(
-        'th-history'
-      )
+      expect(
+        localStorage.getItem(StorageKeys.agentThread(agentTestScope))
+      ).toBe('th-history')
       expect(workflowStore.activeWorkflow?.path).toBe(saved.path)
     }
   )
@@ -5964,7 +5978,10 @@ describe('AgentPanelRoot workflow binding', () => {
     async ({ status, listingStatus }) => {
       makeTab('wf-current')
       useAgentConversationStore().setThreadId('th-current')
-      localStorage.setItem(StorageKeys.agentThread('personal'), 'th-current')
+      localStorage.setItem(
+        StorageKeys.agentThread(agentTestScope),
+        'th-current'
+      )
       vi.stubGlobal(
         'fetch',
         vi.fn(async (url: string) => {
@@ -6033,9 +6050,9 @@ describe('AgentPanelRoot workflow binding', () => {
         await screen.findByRole('menuitem', { name: i18n.global.t('g.delete') })
       )
       expect(useAgentChatHistoryStore().activeId).toBe('th-current')
-      expect(localStorage.getItem(StorageKeys.agentThread('personal'))).toBe(
-        'th-current'
-      )
+      expect(
+        localStorage.getItem(StorageKeys.agentThread(agentTestScope))
+      ).toBe('th-current')
       first.unmount()
       render(AgentPanelRoot, { global: { plugins: [i18n] } })
       await nextTick()
@@ -6044,9 +6061,9 @@ describe('AgentPanelRoot workflow binding', () => {
         screen.getByRole('heading', { name: 'Chat history' })
       ).toBeVisible()
       expect(useAgentChatHistoryStore().activeId).toBe('th-current')
-      expect(localStorage.getItem(StorageKeys.agentThread('personal'))).toBe(
-        'th-current'
-      )
+      expect(
+        localStorage.getItem(StorageKeys.agentThread(agentTestScope))
+      ).toBe('th-current')
       expect(
         screen.queryByRole('button', { name: 'Failed chat' })
       ).not.toBeInTheDocument()
@@ -6055,9 +6072,9 @@ describe('AgentPanelRoot workflow binding', () => {
       )
       await screen.findAllByText('Current request')
       expect(useAgentChatHistoryStore().activeId).toBe('th-current')
-      expect(localStorage.getItem(StorageKeys.agentThread('personal'))).toBe(
-        'th-current'
-      )
+      expect(
+        localStorage.getItem(StorageKeys.agentThread(agentTestScope))
+      ).toBe('th-current')
       expect(screen.queryByText('Failed request')).not.toBeInTheDocument()
     }
   )
@@ -6065,7 +6082,7 @@ describe('AgentPanelRoot workflow binding', () => {
   it('restores an agent-minted draft target after reload and keeps its Cloud identity on send', async () => {
     const draftGraphId = '3d4d7f1e-3c8b-4a0a-9a3c-1d2e3f4a5b6c'
     localStorage.setItem(
-      StorageKeys.agentWorkflowTabBindings('personal'),
+      StorageKeys.agentWorkflowTabBindings(agentTestScope),
       JSON.stringify({
         'wf-minted': {
           tabPath: 'workflows/minted.json',
@@ -6274,7 +6291,7 @@ describe('AgentPanelRoot workflow binding', () => {
     ).toBeVisible()
     expect(useAgentPanelStore().selectedWorkflow).toBeNull()
     expect(useAgentChatHistoryStore().activeId).toBe('th-history')
-    expect(localStorage.getItem(StorageKeys.agentThread('personal'))).toBe(
+    expect(localStorage.getItem(StorageKeys.agentThread(agentTestScope))).toBe(
       'th-history'
     )
     expect(useToastStore().messagesToAdd).not.toContainEqual(
@@ -6307,7 +6324,10 @@ describe('AgentPanelRoot workflow binding', () => {
     async ({ listingStatus, notices, toasts, current }) => {
       makeTab('wf-42')
       useAgentConversationStore().setThreadId('th-history')
-      localStorage.setItem(StorageKeys.agentThread('personal'), 'th-history')
+      localStorage.setItem(
+        StorageKeys.agentThread(agentTestScope),
+        'th-history'
+      )
       stubHistoryWithWorkflowListing(listingStatus)
       render(AgentPanelRoot, { global: { plugins: [i18n] } })
 
@@ -6332,7 +6352,7 @@ describe('AgentPanelRoot workflow binding', () => {
   it('does not mark a stored chat Current when its messages fail to load on startup', async () => {
     telemetry.trackAgentError.mockClear()
     makeTab('wf-42')
-    localStorage.setItem(StorageKeys.agentThread('personal'), 'th-history')
+    localStorage.setItem(StorageKeys.agentThread(agentTestScope), 'th-history')
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
@@ -6368,7 +6388,7 @@ describe('AgentPanelRoot workflow binding', () => {
     })
     makeTab('wf-42')
     useAgentConversationStore().setThreadId('th-history')
-    localStorage.setItem(StorageKeys.agentThread('personal'), 'th-history')
+    localStorage.setItem(StorageKeys.agentThread(agentTestScope), 'th-history')
     stubHistoryWithWorkflowListing(listing)
     render(AgentPanelRoot, { global: { plugins: [i18n] } })
     await screen.findAllByText('Historical prompt')
@@ -7445,7 +7465,7 @@ describe('AgentPanelRoot workflow binding', () => {
     const staleWorkflowId = 'wf-abandoned'
     const defaultPath = 'workflows/Unsaved Workflow.json'
     localStorage.setItem(
-      StorageKeys.agentWorkflowTabBindings('personal'),
+      StorageKeys.agentWorkflowTabBindings(agentTestScope),
       JSON.stringify({
         [staleWorkflowId]: {
           tabPath: defaultPath,
@@ -7454,7 +7474,7 @@ describe('AgentPanelRoot workflow binding', () => {
         }
       })
     )
-    localStorage.setItem(StorageKeys.agentThread('personal'), 'th-stale')
+    localStorage.setItem(StorageKeys.agentThread(agentTestScope), 'th-stale')
     const fresh = addTab(defaultPath, {
       isTemporary: true,
       activeState: fromPartial<ComfyWorkflowJSON>({
@@ -8478,7 +8498,7 @@ describe('AgentPanelRoot workflow binding', () => {
       })
     })
     localStorage.setItem(
-      StorageKeys.agentWorkflowTabBindings('personal'),
+      StorageKeys.agentWorkflowTabBindings(agentTestScope),
       JSON.stringify({
         'wf-from-before-reload': {
           tabPath: tab.path,
@@ -9077,7 +9097,7 @@ describe('AgentPanelRoot workflow binding', () => {
 
   it('includes a backgrounded tab whose binding was persisted before a reload', async () => {
     localStorage.setItem(
-      StorageKeys.agentWorkflowTabBindings('personal'),
+      StorageKeys.agentWorkflowTabBindings(agentTestScope),
       JSON.stringify({
         'wf-old': {
           tabPath: 'workflows/mountain.json',

@@ -12,11 +12,12 @@ import type {
   AgentThreadStartSource,
   AgentWorkflowBindSource
 } from '@/platform/telemetry/types'
-import { clearLegacyAgentStorage } from '@/platform/workflow/persistence/base/storageIO'
 import {
-  getWorkspaceId,
-  StorageKeys
-} from '@/platform/workflow/persistence/base/storageKeys'
+  clearLegacyAgentStorage,
+  getStorageIdentity,
+  getStorageScope
+} from '@/platform/workflow/persistence/base/storageIO'
+import { StorageKeys } from '@/platform/workflow/persistence/base/storageKeys'
 import { createUuidv4 } from '@/utils/uuid'
 import type {
   AgentActiveTabData,
@@ -216,8 +217,22 @@ export function useAgentSession(deps: AgentSessionDeps) {
     onAskResolved,
     workflow
   } = deps
-  const threadStorageKey = StorageKeys.agentThread(getWorkspaceId())
   clearLegacyAgentStorage()
+
+  function readStoredThread(): string | null {
+    const scope = getStorageScope()
+    return scope ? localStorage.getItem(StorageKeys.agentThread(scope)) : null
+  }
+
+  function writeStoredThread(threadId: string): void {
+    const scope = getStorageScope()
+    if (scope) localStorage.setItem(StorageKeys.agentThread(scope), threadId)
+  }
+
+  function removeStoredThread(): void {
+    const scope = getStorageScope()
+    if (scope) localStorage.removeItem(StorageKeys.agentThread(scope))
+  }
 
   const conversationStore = useAgentConversationStore()
   const bindingStore = useAgentWorkflowTabBindingStore()
@@ -295,6 +310,7 @@ export function useAgentSession(deps: AgentSessionDeps) {
   let unsubscribe: (() => void) | null = null
   let unsubscribeStatus: (() => void) | null = null
   let ownedGeneration = 0
+  let observedStorageOwner = getStorageIdentity()
   // The status source reports its current state synchronously on subscribe
   // (see agentEventSource.onStatus), so the first callback is a snapshot,
   // not a transition. Track whether we've ever observed a live connection so
@@ -307,6 +323,19 @@ export function useAgentSession(deps: AgentSessionDeps) {
   }
 
   const malformedStreamReports = new Map<TurnId | null, boolean>()
+
+  function ensureCurrentStorageOwner(): void {
+    const currentOwner = getStorageIdentity()
+    if (currentOwner === observedStorageOwner) return
+    observedStorageOwner = currentOwner
+    loadGeneration++
+    promptEditState.value = { phase: 'idle' }
+    conversationStore.reset()
+    boundWorkflowId.value = null
+    rememberedWorkflowId = null
+    pendingWorkflowBind = null
+    malformedStreamReports.clear()
+  }
 
   function trackMalformedStreamEvent(
     cause: ZodError,
@@ -335,24 +364,20 @@ export function useAgentSession(deps: AgentSessionDeps) {
     workflow?.initialize?.(hasThread)
     // The binding only outlives a remount together with its thread: a page
     // with no surviving thread has no resumed turn the binding could serve.
-    if (
-      conversationStore.threadId === null &&
-      localStorage.getItem(threadStorageKey) === null
-    ) {
+    if (conversationStore.threadId === null && readStoredThread() === null) {
       rememberedWorkflowId = null
       boundWorkflowId.value = null
     }
   }
 
   function start({ restore = true }: { restore?: boolean } = {}): void {
+    ensureCurrentStorageOwner()
     readyThreadId.value = null
     ownedGeneration = ++sessionGeneration
     everLive = false
     const surviving = conversationStore.threadId
     const stored =
-      conversationStore.messages.length === 0
-        ? localStorage.getItem(threadStorageKey)
-        : null
+      conversationStore.messages.length === 0 ? readStoredThread() : null
     const initialThreadId = surviving ?? stored
     initializeWorkflowContext(initialThreadId !== null)
     unsubscribe = events.subscribe(onRaw)
@@ -438,8 +463,7 @@ export function useAgentSession(deps: AgentSessionDeps) {
     if (error instanceof AgentApiError && error.status === 404) {
       if (conversationStore.threadId === threadId)
         conversationStore.setThreadId(null)
-      if (localStorage.getItem(threadStorageKey) === threadId)
-        localStorage.removeItem(threadStorageKey)
+      if (readStoredThread() === threadId) removeStoredThread()
       return false
     }
     reportError(error, { errorType: 'agent_history_load_failed' })
@@ -636,7 +660,7 @@ export function useAgentSession(deps: AgentSessionDeps) {
     const startsThread = conversationStore.threadId === null
     conversationStore.setThreadId(ack.thread_id)
     onThreadActivated?.(ack.thread_id)
-    localStorage.setItem(threadStorageKey, ack.thread_id)
+    writeStoredThread(ack.thread_id)
     if (ack.workflow_id !== undefined) {
       const boundAtAck = boundWorkflowId.value
       bindWorkflow(ack.workflow_id)
@@ -741,6 +765,10 @@ export function useAgentSession(deps: AgentSessionDeps) {
     selectionWorkflowId?: () => string | undefined
   ): Promise<boolean> {
     const generation = loadGeneration
+    const storageOwnerAtSend = getStorageIdentity()
+    const isCurrentSend = () =>
+      generation === loadGeneration &&
+      storageOwnerAtSend === getStorageIdentity()
     const threadAtSend = conversationStore.threadId ?? 'new'
     const originContext = workflow?.current()
     const origin: TurnOrigin =
@@ -749,7 +777,7 @@ export function useAgentSession(deps: AgentSessionDeps) {
     let accepted = false
     try {
       await prepareWorkflow()
-      if (generation !== loadGeneration) return false
+      if (!isCurrentSend()) return false
       const wfContext = workflow?.current(origin)
       if (workflowTargetChanged(originContext, wfContext)) {
         recordUnavailableTarget(text)
@@ -767,7 +795,7 @@ export function useAgentSession(deps: AgentSessionDeps) {
         selectionWorkflowId
       )
       accepted = true
-      if (generation !== loadGeneration) return false
+      if (!isCurrentSend()) return false
       acceptTurn(ack, text, wfContext, attachments, tags, workflowReferences)
       return true
     } catch (error) {
@@ -775,7 +803,7 @@ export function useAgentSession(deps: AgentSessionDeps) {
       // persisted, so a refusal that lands after newChat()/loadThread() has
       // moved on still has to release, or the dead id survives the reload.
       releaseDisownedWorkflow(sentContext, error)
-      if (generation !== loadGeneration) return false
+      if (!isCurrentSend()) return false
       recordSendError(error, text, accepted)
       return false
     }
@@ -796,6 +824,7 @@ export function useAgentSession(deps: AgentSessionDeps) {
     workflowReferences?: WorkflowReference[],
     selectionWorkflowId?: () => string | undefined
   ): Promise<boolean> {
+    ensureCurrentStorageOwner()
     if (sending.value) {
       conversationStore.recordFailedSend(
         nextLocalErrorId(),
@@ -951,7 +980,7 @@ export function useAgentSession(deps: AgentSessionDeps) {
     rememberedWorkflowId = null
     pendingWorkflowBind = null
     malformedStreamReports.clear()
-    localStorage.removeItem(threadStorageKey)
+    removeStoredThread()
     pendingThreadSource.value = source ?? null
   }
 
@@ -979,7 +1008,7 @@ export function useAgentSession(deps: AgentSessionDeps) {
     conversationStore.setThreadId(threadId)
     const hydrated = await hydrateFromServer(threadId, isCurrent, stashedTurn)
     if (hydrated && isCurrent()) {
-      localStorage.setItem(threadStorageKey, threadId)
+      writeStoredThread(threadId)
       onThreadActivated?.(threadId)
       conversationStore.resumeBackgroundTurn()
     }
@@ -1051,6 +1080,7 @@ export function useAgentSession(deps: AgentSessionDeps) {
   }
 
   function onRaw(raw: unknown): void {
+    ensureCurrentStorageOwner()
     if (typeof raw !== 'object' || raw === null) return
     const type = (raw as { type?: unknown }).type
     if (typeof type !== 'string' || !isAgentEvent(type)) return
@@ -1089,7 +1119,10 @@ export function useAgentSession(deps: AgentSessionDeps) {
   }
 
   return {
-    boundWorkflowId: computed(() => boundWorkflowId.value),
+    boundWorkflowId: computed(() => {
+      ensureCurrentStorageOwner()
+      return boundWorkflowId.value
+    }),
     bindWorkflow,
     reportWorkflowBound,
     isSending,
@@ -1108,10 +1141,22 @@ export function useAgentSession(deps: AgentSessionDeps) {
     newChat,
     listThreads,
     loadThread,
-    entries: computed(() => conversationStore.entries),
-    status: computed(() => conversationStore.status),
-    isStreaming: computed(() => conversationStore.isStreaming),
+    entries: computed(() => {
+      ensureCurrentStorageOwner()
+      return conversationStore.entries
+    }),
+    status: computed(() => {
+      ensureCurrentStorageOwner()
+      return conversationStore.status
+    }),
+    isStreaming: computed(() => {
+      ensureCurrentStorageOwner()
+      return conversationStore.isStreaming
+    }),
     notices: computed(() => notices.value),
-    threadId: computed(() => conversationStore.threadId)
+    threadId: computed(() => {
+      ensureCurrentStorageOwner()
+      return conversationStore.threadId
+    })
   }
 }
