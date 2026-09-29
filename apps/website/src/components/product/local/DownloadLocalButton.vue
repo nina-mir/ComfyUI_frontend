@@ -21,9 +21,7 @@ const {
   showInstallerMenu?: boolean
 }>()
 
-const { downloadUrl, platform, showFallback } = useDownloadUrl()
-
-const label = computed(() => t('download.hero.downloadLocal', locale))
+const { installer, showFallback } = useDownloadUrl()
 
 const ICONS: Record<Platform, string> = {
   windows: '/icons/os/windows.svg',
@@ -32,11 +30,7 @@ const ICONS: Record<Platform, string> = {
 }
 
 const buttons = computed(() => {
-  if (platform.value) {
-    return Object.values(installers).filter(
-      (installer) => installer.url === downloadUrl.value
-    )
-  }
+  if (installer.value) return [installer.value]
   if (showFallback.value) {
     return [installers.windows, installers.macArm]
   }
@@ -66,11 +60,6 @@ const buttons = computed(() => {
           showInstallerMenu && btn === buttons[0] && 'rounded-r-none lg:min-w-0'
         )
       "
-      :aria-label="
-        showFallback
-          ? `${label} — ${btn.platform === 'mac' ? 'macOS' : 'Windows'}`
-          : undefined
-      "
       :data-astro-prefetch="btn.platform === 'windows' ? 'false' : undefined"
       @click="captureDownloadClick(btn.platform)"
     >
@@ -80,7 +69,14 @@ const buttons = computed(() => {
           alt=""
           class="inline-block size-5 shrink-0"
         />
-        <span class="inline-block">{{ label }}</span>
+        <span class="text-left">
+          {{ t('download.hero.downloadLocal', locale) }}
+          <span
+            class="block text-xs font-normal tracking-normal whitespace-normal"
+          >
+            {{ t(btn.label, locale) }}
+          </span>
+        </span>
       </span>
     </BrandButton>
     <InstallerMenu v-if="showInstallerMenu && btn === buttons[0]" :locale />

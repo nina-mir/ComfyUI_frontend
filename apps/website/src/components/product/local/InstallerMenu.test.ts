@@ -100,7 +100,9 @@ describe('InstallerMenu', () => {
     render(DownloadLocalButton)
 
     expect(
-      await screen.findByRole('link', { name: 'DOWNLOAD DESKTOP' })
+      await screen.findByRole('link', {
+        name: 'DOWNLOAD DESKTOP macOS (Apple Silicon)'
+      })
     ).toHaveAttribute('href', 'https://download.comfy.org/mac/dmg/arm64')
     expect(screen.queryByRole('button', { name: 'All installers' })).toBeNull()
   })
