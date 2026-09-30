@@ -340,10 +340,13 @@ export const useAuthStore = defineStore('auth', () => {
       ? useApiKeyAuthStore().getAuthHeader()
       : await getFirebaseAuthHeader()
 
-  const currentUserIdentity = (): string | null =>
-    sessionUser.value?.id ??
-    currentUser.value?.uid ??
-    useApiKeyAuthStore().getApiKey()
+  function currentUserIdentity(): string | null {
+    return (
+      sessionUser.value?.id ??
+      currentUser.value?.uid ??
+      useApiKeyAuthStore().getApiKey()
+    )
+  }
 
   const currentUserCredentialIdentity = (): string | null =>
     currentUser.value?.uid ?? useApiKeyAuthStore().getApiKey()
