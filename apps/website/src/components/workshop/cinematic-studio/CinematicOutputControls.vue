@@ -6,7 +6,7 @@ import type {
   Resolution
 } from '../../../lib/workshop/cinematic-studio/catalog'
 import { MAX_TAKES } from '../../../lib/workshop/cinematic-studio/catalog'
-import type { Locale } from '../../../i18n/site'
+import type { Locale } from '../../../i18n/translations'
 import { studioT as tc } from '../../../lib/workshop/cinematic-studio/copy'
 import { framedStyle } from './aspect-style'
 import { FORMAT_TRIGGER_CLASS } from './cinematic-menu-trigger'

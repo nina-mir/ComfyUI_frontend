@@ -12,8 +12,8 @@ import {
   filterWorkshopModels,
   sortWorkshopModels
 } from '../../config/models-catalogue'
-import type { Locale } from '../../i18n/site'
-import { t } from '../../i18n/site'
+import type { Locale } from '../../i18n/translations'
+import { t } from '../../i18n/translations'
 import CardRow from './CardRow.vue'
 import FeaturedBanner from './FeaturedBanner.vue'
 import { modelSlides } from '../../lib/workshop/featured-slides'

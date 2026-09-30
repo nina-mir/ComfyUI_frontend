@@ -4,7 +4,7 @@ import { computed, useTemplateRef } from 'vue'
 
 import { cn } from '@comfyorg/tailwind-utils'
 
-import type { Locale } from '../../../i18n/site'
+import type { Locale } from '../../../i18n/translations'
 import { studioT as tc } from '../../../lib/workshop/cinematic-studio/copy'
 import type { StudioImage } from '../../../lib/workshop/cinematic-studio/take-image'
 import CinematicTooltip from './CinematicTooltip.vue'

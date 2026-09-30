@@ -30,8 +30,8 @@ import {
 } from '../../config/workshop-credits'
 import { WORKSHOP_CREDITS_URL } from '../../config/workshop-env'
 import { useWorkshopSession } from '../../config/workshop-session-state'
-import type { Locale } from '../../i18n/site'
-import { t } from '../../i18n/site'
+import type { Locale } from '../../i18n/translations'
+import { t } from '../../i18n/translations'
 import { captureWorkshopEvent } from '../../scripts/posthog'
 import type { WorkshopCheckoutFailureStage } from '../../scripts/workshop-analytics'
 import {

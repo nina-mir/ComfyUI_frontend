@@ -2,7 +2,7 @@
 import { ChevronDown, Clock, Maximize } from '@lucide/vue'
 
 import type { AspectRatio } from '../../../lib/workshop/cinematic-studio/catalog'
-import type { Locale } from '../../../i18n/site'
+import type { Locale } from '../../../i18n/translations'
 import { studioT as tc } from '../../../lib/workshop/cinematic-studio/copy'
 import type { CinematicVideoCapabilities } from '../../../lib/workshop/cinematic-studio/video'
 import { resolutionLabel } from '../../../lib/workshop/cinematic-studio/video'

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/vue'
 import { describe, expect, it, vi } from 'vitest'
 
 import { deployPromptFor } from '../../config/deploy-prompt'
-import { t } from '../../i18n/site'
+import { t } from '../../i18n/translations'
 import ServerlessDeploySection from './ServerlessDeploySection.vue'
 
 vi.mock(import('../../composables/useReducedMotion'), () => ({

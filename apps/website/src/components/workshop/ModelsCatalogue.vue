@@ -8,8 +8,8 @@ import type {
   WorkflowWorkshopModel,
   WorkshopModel
 } from '../../config/models-catalogue'
-import type { Locale, TranslationKey } from '../../i18n/site'
-import { t } from '../../i18n/site'
+import type { Locale, TranslationKey } from '../../i18n/translations'
+import { t } from '../../i18n/translations'
 import WorkshopModelsGrid from './WorkshopModelsGrid.vue'
 import SplitReveal from './SplitReveal.vue'
 import CatalogueTabs from './CatalogueTabs.vue'
