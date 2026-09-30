@@ -150,14 +150,17 @@ describe('redactTelemetryValues', () => {
       shared = { left: shared, right: shared }
     }
 
-    const redacted = redactTelemetryValues({ shared })?.shared as Record<
-      string,
-      unknown
-    >
+    const redacted = redactTelemetryValues({ shared })?.shared
+    if (typeof redacted !== 'object' || redacted === null) {
+      throw new Error('Expected a redacted shared object')
+    }
+    if (!('left' in redacted) || !('right' in redacted)) {
+      throw new Error('Expected the shared branches')
+    }
     expect(redacted.left).toBe(redacted.right)
   })
 
-  it('redacts real errors without flattening other object instances or invoking getters', () => {
+  it('redacts errors and URLs while failing closed for other object instances', () => {
     const error = new Error(
       'failed https://user:secret@example.com/a.glb?token=x'
     )
@@ -174,13 +177,16 @@ describe('redactTelemetryValues', () => {
     cause.cause = error
     error.cause = cause
     const date = new Date()
+    const url = new URL(
+      'https://user:secret@example.com/model.glb?token=private#fragment'
+    )
     const getter = vi.fn(() => 'https://example.com/a?token=x')
     const value = Object.defineProperty({}, 'unsafe', {
       enumerable: true,
       get: getter
     })
 
-    const redacted = redactTelemetryValues({ error, date, value })
+    const redacted = redactTelemetryValues({ error, date, url, value })
     expect(redacted).toBeDefined()
     if (!redacted) throw new Error('Expected redacted telemetry values')
 
@@ -199,7 +205,8 @@ describe('redactTelemetryValues', () => {
       'cause https://example.com/cause.glb'
     )
     expect(redacted.error.cause.cause).toBe('[Circular]')
-    expect(redacted.date).toBe(date)
+    expect(redacted.date).toBe('[Redacted]')
+    expect(redacted.url).toBe('https://example.com/model.glb')
     expect(redacted.value).toEqual({})
     expect(getter).not.toHaveBeenCalled()
   })

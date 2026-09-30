@@ -255,6 +255,12 @@ export class SceneModelManager implements ModelManagerInterface {
     ;[this.appliedTexture, this.ownsAppliedTexture] = [texture, false]
   }
 
+  copyAppliedTexture(texture: THREE.Texture): void {
+    if (this.ownsAppliedTexture) this.appliedTexture?.dispose()
+    this.appliedTexture = texture.clone()
+    this.ownsAppliedTexture = true
+  }
+
   private appliedTexturesToPreserve(): ReadonlySet<THREE.Texture> {
     return this.ownsAppliedTexture || !this.appliedTexture
       ? new Set()

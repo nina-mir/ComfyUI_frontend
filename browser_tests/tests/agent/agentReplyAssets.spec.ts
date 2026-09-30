@@ -1,12 +1,8 @@
-import type { WebSocketRoute } from '@playwright/test'
 import { expect, mergeTests } from '@playwright/test'
 
 import { webSocketFixture } from '@e2e/fixtures/ws'
 
 import enMessages from '@/locales/en/main.json' with { type: 'json' }
-import type { FeatureFlagsWsMessage } from '@/platform/remote/comfyui/execution/types'
-import type { AgentWsEvent } from '@/workbench/extensions/agent/schemas/agentApiSchema'
-
 import {
   MESSAGE_DONE_EVENT,
   agentTest,
@@ -25,14 +21,6 @@ const MODEL_REPLY = Array.from(
   { length: MODEL_COUNT },
   (_, index) => `- ![mesh-${index}](/api/view?filename=mesh-${index}.glb)`
 ).join('\n')
-
-type WsFrame =
-  | AgentWsEvent
-  | { type: 'feature_flags'; data: FeatureFlagsWsMessage }
-
-function pushEvent(ws: WebSocketRoute, event: WsFrame): void {
-  ws.send(JSON.stringify(event))
-}
 
 const test = mergeTests(agentTest, webSocketFixture)
 
@@ -55,9 +43,9 @@ test.describe('Agent reply assets', { tag: '@cloud' }, () => {
       await agentPanel.sendMessage('show me every mesh')
       await expect.poll(() => postedMessages.length).toBeGreaterThanOrEqual(1)
       const ws = await getWebSocket()
-      pushEvent(ws, { type: 'feature_flags', data: { assets: true } })
-      pushEvent(ws, messageDeltaEvent(MODEL_REPLY))
-      pushEvent(ws, MESSAGE_DONE_EVENT)
+      ws.send(JSON.stringify({ type: 'feature_flags', data: { assets: true } }))
+      ws.send(JSON.stringify(messageDeltaEvent(MODEL_REPLY)))
+      ws.send(JSON.stringify(MESSAGE_DONE_EVENT))
     })
 
     await test.step('render only the collapsed model previews', async () => {

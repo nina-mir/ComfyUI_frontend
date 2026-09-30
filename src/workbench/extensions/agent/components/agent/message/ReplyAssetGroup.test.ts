@@ -9,18 +9,17 @@ import { useDialogStore } from '@/stores/dialogStore'
 import type { ReplyAsset } from '../../../utils/replyAssets'
 import ReplyAssetGroup from './ReplyAssetGroup.vue'
 
-const isAssetPreviewSupported = vi.hoisted(() => vi.fn(() => false))
-const findServerPreviewUrl = vi.hoisted(() =>
-  vi.fn(async (): Promise<string | null> => null)
-)
-const findOutputAsset = vi.hoisted(() =>
-  vi.fn(async (): Promise<{ name: string } | undefined> => undefined)
-)
-vi.mock<unknown>(import('@/platform/assets/utils/assetPreviewUtil'), () => ({
-  isAssetPreviewSupported,
-  findServerPreviewUrl,
-  findOutputAsset
-}))
+vi.mock(import('@/platform/assets/utils/assetPreviewUtil'), { spy: true })
+
+import {
+  findOutputAsset as findOutputAssetImplementation,
+  findServerPreviewUrl as findServerPreviewUrlImplementation,
+  isAssetPreviewSupported as isAssetPreviewSupportedImplementation
+} from '@/platform/assets/utils/assetPreviewUtil'
+
+const findOutputAsset = vi.mocked(findOutputAssetImplementation)
+const findServerPreviewUrl = vi.mocked(findServerPreviewUrlImplementation)
+const isAssetPreviewSupported = vi.mocked(isAssetPreviewSupportedImplementation)
 
 const generateModelThumbnail = vi.hoisted(() =>
   vi.fn(
@@ -79,8 +78,13 @@ function renderGroup(assets: ReplyAsset[]) {
 
 const thumbs = () =>
   screen.getAllByRole('button').filter((b) => b.getAttribute('aria-label'))
-const toggle = () =>
-  screen.getAllByRole('button').find((b) => !b.getAttribute('aria-label'))
+const toggle = () => {
+  const button = screen
+    .getAllByRole('button')
+    .find((candidate) => !candidate.getAttribute('aria-label'))
+  if (!button) throw new Error('Expected the asset group toggle')
+  return button
+}
 
 describe('ReplyAssetGroup', () => {
   beforeEach(() => {
@@ -197,7 +201,10 @@ describe('ReplyAssetGroup', () => {
 
   it('titles audio cards with the resolved asset name, falling back to filename', async () => {
     isAssetPreviewSupported.mockReturnValue(true)
-    findOutputAsset.mockResolvedValue({ name: 'qa_audio_opus_00001' })
+    findOutputAsset.mockResolvedValue({
+      id: 'audio',
+      name: 'qa_audio_opus_00001'
+    })
     renderGroup([audio])
 
     await waitFor(() =>
@@ -280,8 +287,8 @@ describe('ReplyAssetGroup', () => {
         .mocked(useDialogStore().showDialog)
         .mock.calls.at(-1)?.[0]
       const onClose = dialog?.dialogComponentProps?.onClose
-      expect(onClose).toBeTypeOf('function')
-      onClose!()
+      if (typeof onClose !== 'function') throw new Error('Expected onClose')
+      onClose()
       await vi.advanceTimersByTimeAsync(0)
 
       expect(vi.getTimerCount()).toBe(0)
@@ -508,11 +515,11 @@ describe('ReplyAssetGroup', () => {
         .mocked(useDialogStore().showDialog)
         .mock.calls.at(-1)?.[0]
       const onClose = dialog?.dialogComponentProps?.onClose
-      expect(onClose).toBeTypeOf('function')
-      onClose!()
+      if (typeof onClose !== 'function') throw new Error('Expected onClose')
+      onClose()
       await vi.advanceTimersByTimeAsync(0)
       const callsBeforeUnmount = findServerPreviewUrl.mock.calls.length
-      expect(vi.getTimerCount()).toBe(2)
+      expect(vi.getTimerCount()).toBe(1)
 
       unmount()
       expect(vi.getTimerCount()).toBe(0)
@@ -533,8 +540,8 @@ describe('ReplyAssetGroup', () => {
     findServerPreviewUrl.mockResolvedValue('https://x/mesh_preview.png')
     const dialog = vi.mocked(useDialogStore().showDialog).mock.calls.at(-1)?.[0]
     const onClose = dialog?.dialogComponentProps?.onClose
-    expect(onClose).toBeTypeOf('function')
-    onClose!()
+    if (typeof onClose !== 'function') throw new Error('Expected onClose')
+    onClose()
 
     const thumb = await screen.findByRole('img', { name: 'mesh.glb' })
     expect(thumb).toHaveAttribute('src', 'https://x/mesh_preview.png')
@@ -554,8 +561,8 @@ describe('ReplyAssetGroup', () => {
     )
     const dialog = vi.mocked(useDialogStore().showDialog).mock.calls.at(-1)?.[0]
     const onClose = dialog?.dialogComponentProps?.onClose
-    expect(onClose).toBeTypeOf('function')
-    onClose!()
+    if (typeof onClose !== 'function') throw new Error('Expected onClose')
+    onClose()
     await rerender({ assets: [audio] })
 
     resolveRefresh('https://x/mesh_preview.png')
@@ -567,7 +574,10 @@ describe('ReplyAssetGroup', () => {
 
   it('titles the 3D viewer with the resolved asset name', async () => {
     isAssetPreviewSupported.mockReturnValue(true)
-    findOutputAsset.mockResolvedValue({ name: '3d/ComfyUI_00001_.glb' })
+    findOutputAsset.mockResolvedValue({
+      id: 'model',
+      name: '3d/ComfyUI_00001_.glb'
+    })
     renderGroup([model])
 
     await waitFor(() =>
@@ -586,11 +596,11 @@ describe('ReplyAssetGroup', () => {
     expect(thumbs()).toHaveLength(12)
     expect(toggle()).toHaveTextContent('Show more')
 
-    await userEvent.click(toggle()!)
+    await userEvent.click(toggle())
     expect(thumbs()).toHaveLength(13)
     expect(toggle()).toHaveTextContent('Show less')
 
-    await userEvent.click(toggle()!)
+    await userEvent.click(toggle())
     expect(thumbs()).toHaveLength(12)
     expect(toggle()).toHaveTextContent('Show more')
   })
@@ -613,7 +623,7 @@ describe('ReplyAssetGroup', () => {
       expect.any(AbortSignal)
     )
 
-    await userEvent.click(toggle()!)
+    await userEvent.click(toggle())
     await waitFor(() =>
       expect(generateModelThumbnail).toHaveBeenCalledWith(
         'https://x/mesh-12.glb',

@@ -98,6 +98,8 @@ type ThumbnailState =
       attempts: number
       busyAttempts: number
     }
+  | { phase: 'refreshing'; controller: AbortController }
+  | { phase: 'refreshPending'; timeout: ReturnType<typeof setTimeout> }
   | { phase: 'paused'; attempts: number; busyAttempts: number }
   | { phase: 'ready'; src: string }
   | { phase: 'gaveUp' }
@@ -110,17 +112,18 @@ const MAX_THUMBNAIL_BUSY_DELAY_MS = 8 * 60_000
 
 const thumbnailState = ref<Record<string, ThumbnailState>>({})
 const assetNames = ref<Record<string, string>>({})
-type RefreshState = {
-  controller: AbortController
-  timeout?: ReturnType<typeof setTimeout>
-}
-const refreshState = new Map<string, RefreshState>()
 let mounted = true
 
 /** Stop whatever `state` has in flight: an abortable render or a pending retry. */
 function cancelThumbnailState(state: ThumbnailState | undefined): void {
-  if (state?.phase === 'loading') state.controller.abort()
-  else if (state?.phase === 'retryPending') clearTimeout(state.timeout)
+  if (state?.phase === 'loading' || state?.phase === 'refreshing') {
+    state.controller.abort()
+  } else if (
+    state?.phase === 'retryPending' ||
+    state?.phase === 'refreshPending'
+  ) {
+    clearTimeout(state.timeout)
+  }
 }
 
 onBeforeUnmount(() => {
@@ -128,11 +131,6 @@ onBeforeUnmount(() => {
   for (const state of Object.values(thumbnailState.value)) {
     cancelThumbnailState(state)
   }
-  for (const state of refreshState.values()) {
-    state.controller.abort()
-    if (state.timeout !== undefined) clearTimeout(state.timeout)
-  }
-  refreshState.clear()
 })
 
 /** Whether `url`'s current entry is still the `loading` strand owned by `controller`. */
@@ -242,23 +240,14 @@ function scheduleThumbnailRetry(
 
 /** Frees the shared render queue when a 3D asset leaves `visibleVisual`. */
 function hideThumbnail(url: string): void {
-  cancelRefresh(url)
   const state = thumbnailState.value[url]
   if (state?.phase === 'ready' || state?.phase === 'gaveUp') return
   cancelThumbnailState(state)
   thumbnailState.value[url] = {
     phase: 'paused',
-    attempts: state?.attempts ?? 0,
-    busyAttempts: state?.busyAttempts ?? 0
+    attempts: state && 'attempts' in state ? state.attempts : 0,
+    busyAttempts: state && 'busyAttempts' in state ? state.busyAttempts : 0
   }
-}
-
-function cancelRefresh(url: string): void {
-  const state = refreshState.get(url)
-  if (!state) return
-  state.controller.abort()
-  if (state.timeout !== undefined) clearTimeout(state.timeout)
-  refreshState.delete(url)
 }
 
 /**
@@ -312,35 +301,51 @@ const MediaLightbox = defineAsyncComponent(
 function refreshModelThumbnail(asset: ReplyAsset, retry = true): void {
   const state = thumbnailState.value[asset.url]
   if (!mounted || !isAssetPreviewSupported() || state?.phase === 'ready') return
-  cancelRefresh(asset.url)
+  cancelThumbnailState(state)
   const controller = markRaw(new AbortController())
-  const refresh: RefreshState = { controller }
-  refreshState.set(asset.url, refresh)
+  thumbnailState.value[asset.url] = { phase: 'refreshing', controller }
   void findServerPreviewUrl(asset.filename)
     .then((preview) => {
+      const current = thumbnailState.value[asset.url]
       if (
         !mounted ||
         controller.signal.aborted ||
-        refreshState.get(asset.url)?.controller !== controller
+        current?.phase !== 'refreshing' ||
+        current.controller !== controller
       )
         return
       if (preview) {
-        cancelThumbnailState(thumbnailState.value[asset.url])
         thumbnailState.value[asset.url] = { phase: 'ready', src: preview }
-        refreshState.delete(asset.url)
       } else if (retry) {
-        refresh.timeout = setTimeout(() => {
-          if (refreshState.get(asset.url)?.controller !== controller) return
-          refreshState.delete(asset.url)
+        const timeout = setTimeout(() => {
+          if (thumbnailState.value[asset.url]?.phase !== 'refreshPending') {
+            return
+          }
           refreshModelThumbnail(asset, false)
         }, 2000)
+        thumbnailState.value[asset.url] = {
+          phase: 'refreshPending',
+          timeout: markRaw(timeout)
+        }
       } else {
-        refreshState.delete(asset.url)
+        thumbnailState.value[asset.url] = {
+          phase: 'paused',
+          attempts: 0,
+          busyAttempts: 0
+        }
       }
     })
     .catch(() => {
-      if (refreshState.get(asset.url)?.controller === controller) {
-        refreshState.delete(asset.url)
+      const current = thumbnailState.value[asset.url]
+      if (
+        current?.phase === 'refreshing' &&
+        current.controller === controller
+      ) {
+        thumbnailState.value[asset.url] = {
+          phase: 'paused',
+          attempts: 0,
+          busyAttempts: 0
+        }
       }
     })
 }

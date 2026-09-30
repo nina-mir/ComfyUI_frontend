@@ -244,6 +244,7 @@ class Load3dService {
 
         target.getModelManager().currentModel = modelClone
         target.getSceneManager().scene.add(modelClone)
+        target.getModelManager().setupModelMaterials(modelClone)
 
         const sourceOriginalModel = source.getModelManager().originalModel
 
@@ -251,19 +252,16 @@ class Load3dService {
           target.getModelManager().originalModel = sourceOriginalModel
         }
 
-        target.getModelManager().materialMode =
-          source.getModelManager().materialMode
-
         target.getModelManager().currentUpDirection =
           source.getModelManager().currentUpDirection
 
-        target.setMaterialMode(source.getModelManager().materialMode)
-        target.setUpDirection(source.getModelManager().currentUpDirection)
-
         const appliedTexture = source.getModelManager().appliedTexture
         if (appliedTexture) {
-          target.getModelManager().borrowAppliedTexture(appliedTexture)
+          target.getModelManager().copyAppliedTexture(appliedTexture)
         }
+
+        target.setMaterialMode(source.getModelManager().materialMode)
+        target.setUpDirection(source.getModelManager().currentUpDirection)
 
         const sourceInitial = source.getGizmoManager().getInitialTransform()
         modelClone.position.set(

@@ -384,7 +384,7 @@ describe('load3dService', () => {
         originalModel: unknown
         materialMode: string
         currentUpDirection: string
-        appliedTexture: unknown
+        appliedTexture: THREE.Texture | null
       }
       gizmoManager: {
         isEnabled: () => boolean
@@ -416,14 +416,18 @@ describe('load3dService', () => {
         sceneAdded.push(o)
         scene.add(o)
       })
-      const modelManager = {
+      const modelManager: TargetState['modelManager'] & {
+        setupModelMaterials: ReturnType<typeof vi.fn>
+        copyAppliedTexture: (texture: THREE.Texture) => void
+      } = {
         currentModel: existingModel,
-        originalModel: null as unknown,
+        originalModel: null,
         materialMode: 'original',
         currentUpDirection: 'original',
-        appliedTexture: null as unknown,
-        borrowAppliedTexture(texture: unknown) {
-          this.appliedTexture = texture
+        appliedTexture: null,
+        setupModelMaterials: vi.fn(),
+        copyAppliedTexture(texture: THREE.Texture) {
+          this.appliedTexture = texture.clone()
         }
       }
       const animationManager = {
@@ -446,7 +450,9 @@ describe('load3dService', () => {
           } as unknown as THREE.Scene
         }),
         loadModel: vi.fn<Load3d['loadModel']>().mockResolvedValue('loaded'),
-        setMaterialMode: vi.fn(),
+        setMaterialMode: vi.fn((mode: string) => {
+          modelManager.materialMode = mode
+        }),
         setUpDirection: vi.fn(),
         applyGizmoTransform: vi.fn(),
         setGizmoEnabled: vi.fn(),
@@ -641,7 +647,7 @@ describe('load3dService', () => {
 
     it('copies originalModel, material mode, up direction, and applied texture from source to target', async () => {
       const sourceOriginal = { kind: 'gltf' }
-      const texture = { id: 'tex1' }
+      const texture = new THREE.Texture()
       const source = makeSource({
         currentModel: makeModel(),
         originalModel: sourceOriginal,
@@ -657,7 +663,8 @@ describe('load3dService', () => {
       expect(state.modelManager.originalModel).toBe(sourceOriginal)
       expect(state.modelManager.materialMode).toBe('wireframe')
       expect(state.modelManager.currentUpDirection).toBe('+y')
-      expect(state.modelManager.appliedTexture).toBe(texture)
+      expect(state.modelManager.appliedTexture).toBeInstanceOf(THREE.Texture)
+      expect(state.modelManager.appliedTexture).not.toBe(texture)
       expect(target.setMaterialMode).toHaveBeenCalledWith('wireframe')
       expect(target.setUpDirection).toHaveBeenCalledWith('+y')
     })

@@ -145,6 +145,13 @@ vi.mock(import('@/lib/litegraph/src/litegraph'), () => ({
 
 await import('@/extensions/core/load3d')
 const load3DExt = capture.getExtension('Comfy.Load3D')
+
+async function getLoad3DWidget() {
+  if (!load3DExt.getCustomWidgets) {
+    throw new Error('Expected custom Load3D widgets')
+  }
+  return (await load3DExt.getCustomWidgets(app)).LOAD_3D
+}
 const preview3DExt = capture.getExtension('Comfy.Preview3D')
 const preview3DAdvancedExt = capture.getExtension('Comfy.Preview3DAdvanced')
 const save3DAdvancedExt = capture.getExtension('Comfy.Save3DAdvanced')
@@ -529,12 +536,7 @@ describe('Comfy.Load3D.getCustomWidgets LOAD_3D', () => {
     const node = makeLoad3DNode()
     const addWidget = node.addWidget as ReturnType<typeof vi.fn>
 
-    ;(await load3DExt.getCustomWidgets!(app)).LOAD_3D(
-      node,
-      'model_file',
-      ['LOAD_3D', {}],
-      app
-    )
+    ;(await getLoad3DWidget())(node, 'model_file', ['LOAD_3D', {}], app)
 
     const buttonNames = addWidget.mock.calls
       .filter(([type]) => type === 'button')
@@ -563,17 +565,14 @@ describe('Comfy.Load3D.getCustomWidgets LOAD_3D', () => {
       return element
     })
 
-    ;(await load3DExt.getCustomWidgets!(app)).LOAD_3D(
-      node,
-      'model_file',
-      ['LOAD_3D', {}],
-      app
-    )
-    const [modelInput] = fileInputs
+    ;(await getLoad3DWidget())(node, 'model_file', ['LOAD_3D', {}], app)
+    const modelInput = fileInputs.at(0)
+    if (!modelInput) throw new Error('Expected a model file input')
     Object.defineProperty(modelInput, 'files', {
       value: [new File(['x'], 'model.glb')]
     })
-    await modelInput.onchange!(new Event('change'))
+    if (!modelInput.onchange) throw new Error('Expected a change handler')
+    await modelInput.onchange(new Event('change'))
     await flush()
 
     expect(load3d.loadModel).toHaveBeenCalledWith('/api/view')
@@ -601,17 +600,14 @@ describe('Comfy.Load3D.getCustomWidgets LOAD_3D', () => {
       return element
     })
 
-    ;(await load3DExt.getCustomWidgets!(app)).LOAD_3D(
-      node,
-      'model_file',
-      ['LOAD_3D', {}],
-      app
-    )
-    const [modelInput] = fileInputs
+    ;(await getLoad3DWidget())(node, 'model_file', ['LOAD_3D', {}], app)
+    const modelInput = fileInputs.at(0)
+    if (!modelInput) throw new Error('Expected a model file input')
     Object.defineProperty(modelInput, 'files', {
       value: [new File(['x'], 'model.glb')]
     })
-    await modelInput.onchange!(new Event('change'))
+    if (!modelInput.onchange) throw new Error('Expected a change handler')
+    await modelInput.onchange(new Event('change'))
     await flush()
 
     expect(
@@ -630,12 +626,7 @@ describe('Comfy.Load3D.getCustomWidgets LOAD_3D', () => {
     })
     const addWidget = node.addWidget as ReturnType<typeof vi.fn>
 
-    ;(await load3DExt.getCustomWidgets!(app)).LOAD_3D(
-      node,
-      'model_file',
-      ['LOAD_3D', {}],
-      app
-    )
+    ;(await getLoad3DWidget())(node, 'model_file', ['LOAD_3D', {}], app)
 
     const buttonCalls = addWidget.mock.calls.filter(
       ([type]) => type === 'button'

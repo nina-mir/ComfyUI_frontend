@@ -411,9 +411,12 @@ describe('SceneModelManager', () => {
     it('disposes mesh geometry and materials', async () => {
       const { manager } = createManager()
       const model = createMeshModel()
-      const mesh = model.children[0] as THREE.Mesh
+      const mesh = model.children[0]
+      if (!(mesh instanceof THREE.Mesh) || Array.isArray(mesh.material)) {
+        throw new Error('Expected a mesh with one material')
+      }
       const geoDispose = vi.spyOn(mesh.geometry, 'dispose')
-      const matDispose = vi.spyOn(mesh.material as THREE.Material, 'dispose')
+      const matDispose = vi.spyOn(mesh.material, 'dispose')
 
       await manager.setupModel(model)
       manager.clearModel()
@@ -425,8 +428,11 @@ describe('SceneModelManager', () => {
     it('disposes parked original materials outside original mode', async () => {
       const { manager } = createManager()
       const model = createMeshModel()
-      const mesh = model.children[0] as THREE.Mesh
-      const originalMaterial = mesh.material as THREE.Material
+      const mesh = model.children[0]
+      if (!(mesh instanceof THREE.Mesh) || Array.isArray(mesh.material)) {
+        throw new Error('Expected a mesh with one material')
+      }
+      const originalMaterial = mesh.material
       const dispose = vi.spyOn(originalMaterial, 'dispose')
 
       await manager.setupModel(model)
@@ -439,9 +445,12 @@ describe('SceneModelManager', () => {
     it('disposes points geometry and materials', async () => {
       const { manager } = createManager()
       const model = createPointsModel()
-      const points = model.children[0] as THREE.Points
+      const points = model.children[0]
+      if (!(points instanceof THREE.Points) || Array.isArray(points.material)) {
+        throw new Error('Expected points with one material')
+      }
       const geoDispose = vi.spyOn(points.geometry, 'dispose')
-      const matDispose = vi.spyOn(points.material as THREE.Material, 'dispose')
+      const matDispose = vi.spyOn(points.material, 'dispose')
 
       await manager.setupModel(model)
       manager.clearModel()

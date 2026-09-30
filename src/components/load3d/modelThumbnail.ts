@@ -5,7 +5,7 @@ import {
   persistThumbnail
 } from '@/platform/assets/utils/assetPreviewUtil'
 import { reportError } from '@/platform/telemetry/reportError'
-import { redactTelemetryUrls } from '@/platform/telemetry/redactTelemetryUrls'
+import { redactTelemetryError } from '@/platform/telemetry/redactTelemetryUrls'
 import type { SharedRendererHandle } from '@/renderer/three/sharedWebGLRenderer'
 
 let queue: Promise<unknown> = Promise.resolve()
@@ -15,23 +15,6 @@ const RENDER_CANCELLED = new Error('Model thumbnail render cancelled')
 const RENDER_FAILED = new Error('Model thumbnail load did not complete')
 let queuedRenderCount = 0
 let rendererKeepAlive: SharedRendererHandle | null = null
-
-/**
- * `modelUrl` on the agent path is untrusted — it is the raw `href` from the
- * model's markdown reply and may carry credentials or a signed query string.
- * three.js's `FileLoader` embeds it verbatim in its thrown error, whose
- * message and stack both reach `reportError`, so absolute and root-relative
- * URL-shaped tokens are stripped of credentials and query strings here.
- */
-function redactedCopy(error: unknown): Error {
-  const source = error instanceof Error ? error : new Error(String(error))
-  // `cause` is deliberately not propagated: Sentry's linkedErrorsIntegration
-  // walks it by default and would re-leak the unscrubbed original.
-  const redacted = new Error(redactTelemetryUrls(source.message))
-  redacted.name = redactTelemetryUrls(source.name)
-  if (source.stack) redacted.stack = redactTelemetryUrls(source.stack)
-  return redacted
-}
 
 /**
  * Outcome of an offscreen thumbnail render. `cancelled` is separated from
@@ -46,14 +29,13 @@ export type ModelThumbnailResult =
 
 /**
  * Render a model to a thumbnail data URL offscreen, without opening the
- * viewer. Starts one render at a time so at most one offscreen scene is
- * live, and persists the result through the asset API so other surfaces
- * pick it up.
+ * viewer. Starts one render at a time and persists the result through the
+ * asset API so other surfaces pick it up.
  *
  * A render that outlives its deadline, or whose `callerSignal` aborts, is
- * given up on: its viewer is torn down and the queue moves on, but the
- * underlying transfer and parse are not abortable and run to completion in
- * the background.
+ * given up on: its viewer is torn down and the queue moves on. Underlying
+ * transfer and parse work may continue, so its admission slot and renderer
+ * lease remain held until that work settles.
  */
 export function generateModelThumbnail(
   modelUrl: string,
@@ -68,51 +50,66 @@ export function generateModelThumbnail(
   }
 
   queuedRenderCount++
-  const run = queue.then(async (): Promise<ModelThumbnailResult> => {
+  const started = queue.then((): ThumbnailTask | ModelThumbnailResult => {
     if (callerSignal?.aborted) return { status: 'cancelled' }
     return renderThumbnailWithTimeout(modelUrl, assetName, callerSignal)
   })
+  const run = started.then((task) =>
+    'result' in task ? task.result : Promise.resolve(task)
+  )
   queue = run.catch(() => null)
-  return run.finally(() => {
+  void started.then(async (task) => {
+    if ('completed' in task) await task.completed
     queuedRenderCount--
     if (queuedRenderCount === 0) {
       rendererKeepAlive?.release()
       rendererKeepAlive = null
     }
   })
+  return run
 }
 
-async function renderThumbnailWithTimeout(
+type ThumbnailTask = {
+  result: Promise<ModelThumbnailResult>
+  completed: Promise<void>
+}
+
+function renderThumbnailWithTimeout(
   modelUrl: string,
   assetName: string,
   callerSignal?: AbortSignal
-): Promise<ModelThumbnailResult> {
-  if (callerSignal?.aborted) return { status: 'cancelled' }
-  try {
-    const dataUrl = await renderThumbnailJob(modelUrl, assetName, callerSignal)
-    return { status: 'rendered', dataUrl }
-  } catch (error) {
-    // Classify by the caught error's identity, not `callerSignal.aborted` at
-    // catch time: a mutable flag read after the fact cannot tell a genuine
-    // render fault from an unrelated abort landing in the same tick.
-    if (error === RENDER_CANCELLED) {
-      return { status: 'cancelled' }
-    }
-    if (error instanceof TimeoutError) return { status: 'timedOut' }
-    reportError(redactedCopy(error), {
-      errorType: 'agent_model_thumbnail_generation_failure'
-    })
-    return { status: 'failed' }
+): ThumbnailTask {
+  const task = renderThumbnailJob(modelUrl, assetName, callerSignal)
+  return {
+    completed: task.completed,
+    result: task.result.then(
+      (dataUrl): ModelThumbnailResult => ({ status: 'rendered', dataUrl }),
+      (error: unknown): ModelThumbnailResult => {
+        if (error === RENDER_CANCELLED) return { status: 'cancelled' }
+        if (error instanceof TimeoutError) return { status: 'timedOut' }
+        reportError(redactTelemetryError(error), {
+          errorType: 'agent_model_thumbnail_generation_failure'
+        })
+        return { status: 'failed' }
+      }
+    )
   }
 }
 
-async function renderThumbnailJob(
+function renderThumbnailJob(
   modelUrl: string,
   assetName: string,
   callerSignal?: AbortSignal
-): Promise<string> {
+): { result: Promise<string>; completed: Promise<void> } {
   const deadline = new AbortController()
-  return new Promise<string>((resolve, reject) => {
+  const operation = (async () => {
+    const { acquireSharedRenderer } =
+      await import('@/renderer/three/sharedWebGLRenderer')
+    deadline.signal.throwIfAborted()
+    rendererKeepAlive ??= acquireSharedRenderer()
+    return renderThumbnailInner(modelUrl, assetName, deadline.signal)
+  })()
+  const result = new Promise<string>((resolve, reject) => {
     let settled = false
     const finish = (): boolean => {
       if (settled) return false
@@ -135,16 +132,17 @@ async function renderThumbnailJob(
     )
     callerSignal?.addEventListener('abort', onCallerAbort, { once: true })
 
-    void (async () => {
-      const { acquireSharedRenderer } =
-        await import('@/renderer/three/sharedWebGLRenderer')
-      deadline.signal.throwIfAborted()
-      rendererKeepAlive ??= acquireSharedRenderer()
-      return renderThumbnailInner(modelUrl, assetName, deadline.signal)
-    })().then(settleResolved, (error: unknown) =>
+    void operation.then(settleResolved, (error: unknown) =>
       settleRejected(error instanceof Error ? error : new Error(String(error)))
     )
   })
+  return {
+    result,
+    completed: operation.then(
+      () => {},
+      () => {}
+    )
+  }
 }
 
 async function renderThumbnailInner(

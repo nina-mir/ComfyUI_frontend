@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fromPartial } from '@total-typescript/shoehorn'
 import { nextTick, ref, shallowRef, effectScope } from 'vue'
 import type { EffectScope } from 'vue'
 import { useSettingStore } from '@/platform/settings/settingStore'
@@ -1009,12 +1010,13 @@ describe('useLoad3d', () => {
 
   describe('handleModelDrop', () => {
     it('should upload file, construct URL, and load model', async () => {
-      const modelWidget = {
+      const modelWidget = fromPartial<IWidget>({
         name: 'model_file',
         value: '',
         type: 'text'
-      } as IWidget
-      mockNode.widgets!.push(modelWidget)
+      })
+      mockNode.widgets ??= []
+      mockNode.widgets.push(modelWidget)
       vi.mocked(Load3dUtils.uploadFile).mockResolvedValue('uploaded/model.glb')
       vi.mocked(Load3dUtils.splitFilePath).mockReturnValue([
         'uploaded',
@@ -1044,14 +1046,16 @@ describe('useLoad3d', () => {
     })
 
     it('does not commit the model widget when loading is not completed', async () => {
-      const modelWidget = {
+      const modelWidget = fromPartial<IWidget>({
         name: 'model_file',
         value: 'previous.glb',
         type: 'text'
-      } as IWidget
-      mockNode.widgets!.push(modelWidget)
+      })
+      mockNode.widgets ??= []
+      mockNode.widgets.push(modelWidget)
       vi.mocked(Load3dUtils.uploadFile).mockResolvedValue('uploaded/model.glb')
-      vi.mocked(mockLoad3d.loadModel!).mockResolvedValueOnce('cancelled')
+      if (!mockLoad3d.loadModel) throw new Error('Expected loadModel')
+      vi.mocked(mockLoad3d.loadModel).mockResolvedValueOnce('cancelled')
 
       const composable = useLoad3d(mockNode)
       await composable.initializeLoad3d(document.createElement('div'))

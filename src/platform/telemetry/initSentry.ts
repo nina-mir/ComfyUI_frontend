@@ -33,6 +33,7 @@ function redactSentryContexts(contexts: Contexts | undefined): Contexts {
 }
 
 function redactSentryException(exception: Exception): void {
+  if (exception.type) exception.type = redactTelemetryUrls(exception.type)
   if (exception.value) exception.value = redactTelemetryUrls(exception.value)
   for (const frame of exception.stacktrace?.frames ?? []) {
     if (frame.filename) frame.filename = redactTelemetryUrls(frame.filename)
@@ -77,9 +78,14 @@ export function initSentry({
           span.data[key] = redactTelemetryUrls(value)
         } else if (
           Array.isArray(value) &&
-          value.every((item): item is string => typeof item === 'string')
+          value.every(
+            (item): item is string | null | undefined =>
+              typeof item === 'string' || item == null
+          )
         ) {
-          span.data[key] = value.map(redactTelemetryUrls)
+          span.data[key] = value.map((item) =>
+            typeof item === 'string' ? redactTelemetryUrls(item) : item
+          )
         }
       }
       return span

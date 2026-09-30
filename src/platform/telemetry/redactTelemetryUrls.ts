@@ -131,6 +131,19 @@ export function redactTelemetryValues(
   )
 }
 
+export function redactTelemetryError(error: unknown): Error {
+  const source = error instanceof Error ? error : new Error(String(error))
+  return redactError(
+    source,
+    {
+      ancestors: new WeakSet<object>(),
+      memo: new WeakMap<object, unknown>(),
+      nodesRemaining: MAX_REDACTION_NODES
+    },
+    0
+  )
+}
+
 interface RedactionContext {
   ancestors: WeakSet<object>
   memo: WeakMap<object, unknown>
@@ -160,12 +173,14 @@ function redactClassifiedValue(
       return redactError(classification.value, context, depth)
     case 'array':
       return redactArray(classification.value, context, depth)
+    case 'url':
+      return redactTelemetryUrls(classification.value.href)
     case 'plain':
       return redactPlainObject(value, context, depth)
     case 'unsafe':
       return REDACTION_SENTINEL
     case 'other':
-      return value
+      return REDACTION_SENTINEL
   }
 }
 
@@ -224,11 +239,13 @@ function redactPlainObject(
 type ObjectClassification =
   | { kind: 'error'; value: Error }
   | { kind: 'array'; value: unknown[] }
+  | { kind: 'url'; value: URL }
   | { kind: 'plain' | 'other' | 'unsafe' }
 
 function classifyObject(value: object): ObjectClassification {
   try {
     if (value instanceof Error) return { kind: 'error', value }
+    if (value instanceof URL) return { kind: 'url', value }
     if (Array.isArray(value)) return { kind: 'array', value }
     const prototype = Object.getPrototypeOf(value)
     return prototype === Object.prototype || prototype === null
