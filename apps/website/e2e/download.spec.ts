@@ -179,7 +179,7 @@ test.describe('Download page @smoke', () => {
 
       const installers = page.getByRole('menu').getByRole('menuitem')
       await expect(installers).toHaveText([
-        'Windows x64 (including Snapdragon)',
+        'Windows x64',
         'Windows ARM64 (NVIDIA only)',
         'macOS (Apple Silicon)',
         'Linux x64 (AppImage)'
@@ -255,7 +255,7 @@ test.describe('Download page @smoke', () => {
       const hero = heroLocator(page)
 
       const windowsBtn = hero.getByRole('link', {
-        name: 'DOWNLOAD DESKTOP Windows x64 (including Snapdragon)'
+        name: 'DOWNLOAD DESKTOP Windows x64'
       })
       await expect(windowsBtn).toBeVisible()
       await expect(windowsBtn).toHaveAttribute(

@@ -46,10 +46,7 @@ describe('InstallerMenu', () => {
         .getAllByRole('menuitem')
         .map((item) => [item.textContent.trim(), item.getAttribute('href')])
     ).toEqual([
-      [
-        'Windows x64 (including Snapdragon)',
-        'https://comfy.org/download/windows/nsis/x64'
-      ],
+      ['Windows x64', 'https://comfy.org/download/windows/nsis/x64'],
       [
         'Windows ARM64 (NVIDIA only)',
         'https://comfy.org/download/windows/nsis/arm64'
@@ -70,7 +67,7 @@ describe('InstallerMenu', () => {
   })
 
   it.for([
-    { installer: 'Windows x64 (including Snapdragon)', platform: 'windows' },
+    { installer: 'Windows x64', platform: 'windows' },
     { installer: 'Windows ARM64 (NVIDIA only)', platform: 'windows' },
     { installer: 'macOS (Apple Silicon)', platform: 'mac' },
     { installer: 'Linux x64 (AppImage)', platform: 'linux' }
