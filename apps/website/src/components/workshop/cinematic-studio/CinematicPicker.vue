@@ -6,8 +6,8 @@ import type {
   DirectionGroup,
   DirectionPart
 } from '../../../lib/workshop/cinematic-studio/catalog'
-import type { Locale } from '../../../i18n/translations'
-import { tc } from '../../../lib/workshop/cinematic-studio/copy'
+import type { Locale } from '../../../i18n/site'
+import { studioT as tc } from '../../../lib/workshop/cinematic-studio/copy'
 import CinematicColors from './CinematicColors.vue'
 import CinematicGradeImageTile from './CinematicGradeImageTile.vue'
 import CinematicOptionGrid from './CinematicOptionGrid.vue'
@@ -85,7 +85,7 @@ const selectedIn = (part: DirectionPart) =>
         class="h-9 self-end rounded-xl bg-primary-warm-white px-4 text-sm font-semibold text-primary-comfy-ink hover:bg-primary-warm-white/90"
         @click="editing = false"
       >
-        {{ tc('cinematic.grade.done', locale) }}
+        {{ tc('cinematic.grade.done', {}, { locale: locale }) }}
       </button>
     </div>
     <template v-else>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { Locale } from '../../../i18n/translations'
-import { tc } from '../../../lib/workshop/cinematic-studio/copy'
+import type { Locale } from '../../../i18n/site'
+import { studioT as tc } from '../../../lib/workshop/cinematic-studio/copy'
 import CinematicEnhanceSwitch from './CinematicEnhanceSwitch.vue'
 
 const { video = false, locale = 'en' } = defineProps<{
@@ -18,7 +18,7 @@ const labelClass = 'text-xs font-medium text-primary-warm-gray'
 <template>
   <section class="flex flex-col gap-2">
     <label for="cinematic-scene" :class="labelClass">
-      {{ tc('cinematic.section.scene', locale) }}
+      {{ tc('cinematic.section.scene', {}, { locale: locale }) }}
     </label>
     <div
       class="flex flex-col overflow-hidden rounded-2xl border border-transparency-white-t20 bg-transparency-white-t4 focus-within:border-primary-warm-white/60"
@@ -27,7 +27,7 @@ const labelClass = 'text-xs font-medium text-primary-warm-gray'
         id="cinematic-scene"
         v-model="scene"
         rows="4"
-        :placeholder="tc('cinematic.scene.placeholder', locale)"
+        :placeholder="tc('cinematic.scene.placeholder', {}, { locale: locale })"
         class="h-28 resize-none bg-transparent px-3.5 py-3 text-sm leading-relaxed text-primary-warm-white outline-none placeholder:text-primary-warm-gray"
       />
       <div class="flex items-center justify-between gap-3 pr-4 pb-2.5 pl-2.5">

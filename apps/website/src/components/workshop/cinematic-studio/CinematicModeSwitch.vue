@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
-import type { Locale } from '../../../i18n/translations'
-import { tc } from '../../../lib/workshop/cinematic-studio/copy'
+import type { Locale } from '../../../i18n/site'
+import { studioT as tc } from '../../../lib/workshop/cinematic-studio/copy'
 
 const { disabled = false, locale = 'en' } = defineProps<{
   disabled?: boolean
@@ -14,7 +14,7 @@ const mode = defineModel<'image' | 'video'>({ required: true })
   <div
     class="flex gap-1 rounded-xl border border-transparency-white-t20 bg-primary-comfy-ink-light p-1"
     role="group"
-    :aria-label="tc('cinematic.video.mode', locale)"
+    :aria-label="tc('cinematic.video.mode', {}, { locale: locale })"
   >
     <button
       v-for="option in ['image', 'video'] as const"
@@ -35,7 +35,8 @@ const mode = defineModel<'image' | 'video'>({ required: true })
           option === 'image'
             ? 'cinematic.video.image'
             : 'cinematic.video.video',
-          locale
+          {},
+          { locale: locale }
         )
       }}
     </button>

@@ -12,8 +12,8 @@ import {
   filterWorkshopModels,
   sortWorkshopModels
 } from '../../config/models-catalogue'
-import type { Locale } from '../../i18n/translations'
-import { t } from '../../i18n/translations'
+import type { Locale } from '../../i18n/site'
+import { t } from '../../i18n/site'
 import CardRow from './CardRow.vue'
 import FeaturedBanner from './FeaturedBanner.vue'
 import { modelSlides } from '../../lib/workshop/featured-slides'
@@ -141,7 +141,7 @@ const chips = computed<FilterChip[]>(() => [
   })),
   ...runsOn.value.map((name) => ({
     key: `model:${name}`,
-    label: t('workshop.filter.runsOn', locale, { model: name })
+    label: t('workshop.filter.runsOn', { model: name }, { locale: locale })
   }))
 ])
 
@@ -178,12 +178,12 @@ function leaveSection() {
         @click="leaveSection"
       >
         <ChevronLeft class="size-4" aria-hidden="true" />
-        {{ t('workshop.sections.back', locale) }}
+        {{ t('workshop.sections.back', {}, { locale: locale }) }}
       </button>
       <h2
         class="mt-3 mb-4 scroll-mt-24 text-3xl font-bold text-primary-warm-white sm:text-4xl lg:scroll-mt-32"
       >
-        {{ t('workshop.catalogue.allWorkflows', locale) }}
+        {{ t('workshop.catalogue.allWorkflows', {}, { locale: locale }) }}
         <span
           class="text-base font-normal text-primary-warm-gray tabular-nums"
           >{{ visible.length }}</span
@@ -272,7 +272,7 @@ function leaveSection() {
         data-testid="browse-all-end"
         @click="browseAll = true"
       >
-        {{ t('workshop.catalogue.browseAllWorkflows', locale) }}
+        {{ t('workshop.catalogue.browseAllWorkflows', {}, { locale: locale }) }}
         <ChevronRight
           class="size-4 transition-transform group-hover:translate-x-0.5"
           aria-hidden="true"
@@ -283,7 +283,7 @@ function leaveSection() {
     <ul
       v-else-if="visible.length"
       class="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-      :aria-label="t('workshop.hub.workflows', locale)"
+      :aria-label="t('workshop.hub.workflows', {}, { locale: locale })"
       data-testid="workflow-search-results"
     >
       <li v-for="model in visible" :key="model.slug">
@@ -295,10 +295,10 @@ function leaveSection() {
       class="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-transparency-white-t8 px-6 py-16 text-center"
     >
       <p class="text-lg font-semibold text-primary-comfy-canvas">
-        {{ t('workshop.catalogue.noWorkflows', locale) }}
+        {{ t('workshop.catalogue.noWorkflows', {}, { locale: locale }) }}
       </p>
       <Button variant="outline" size="sm" @click="clear">
-        {{ t('workshop.empty.clear', locale) }}
+        {{ t('workshop.empty.clear', {}, { locale: locale }) }}
       </Button>
     </div>
   </section>

@@ -4,8 +4,8 @@ import { computed, useTemplateRef } from 'vue'
 
 import { cn } from '@comfyorg/tailwind-utils'
 
-import type { Locale } from '../../../i18n/translations'
-import { tc } from '../../../lib/workshop/cinematic-studio/copy'
+import type { Locale } from '../../../i18n/site'
+import { studioT as tc } from '../../../lib/workshop/cinematic-studio/copy'
 import type { StudioImage } from '../../../lib/workshop/cinematic-studio/take-image'
 import CinematicTooltip from './CinematicTooltip.vue'
 import { useImagePreview } from './useImagePreview'
@@ -18,7 +18,7 @@ const file = defineModel<StudioImage | undefined>()
 const preview = useImagePreview(() => file.value)
 const input = useTemplateRef<HTMLInputElement>('input')
 const action = computed(() => {
-  const label = tc('cinematic.reference.castAction', locale)
+  const label = tc('cinematic.reference.castAction', {}, { locale: locale })
   return file.value ? `${label}: ${file.value.name}` : label
 })
 
@@ -34,7 +34,9 @@ function choose(event: Event) {
 <template>
   <div class="relative">
     <CinematicTooltip
-      :text="file?.name ?? tc('cinematic.reference.cast', locale)"
+      :text="
+        file?.name ?? tc('cinematic.reference.cast', {}, { locale: locale })
+      "
     >
       <button
         type="button"
@@ -60,7 +62,7 @@ function choose(event: Event) {
       v-if="file"
       type="button"
       class="absolute -top-1.5 -right-1.5 grid size-4 place-items-center rounded-full bg-primary-warm-white text-primary-comfy-ink hover:bg-primary-comfy-yellow"
-      :aria-label="tc('cinematic.reference.remove', locale)"
+      :aria-label="tc('cinematic.reference.remove', {}, { locale: locale })"
       @click="file = undefined"
     >
       <X class="size-2.5" aria-hidden="true" />

@@ -8,8 +8,8 @@ import type {
   WorkflowWorkshopModel,
   WorkshopModel
 } from '../../config/models-catalogue'
-import type { Locale, TranslationKey } from '../../i18n/translations'
-import { t } from '../../i18n/translations'
+import type { Locale, TranslationKey } from '../../i18n/site'
+import { t } from '../../i18n/site'
 import WorkshopModelsGrid from './WorkshopModelsGrid.vue'
 import SplitReveal from './SplitReveal.vue'
 import CatalogueTabs from './CatalogueTabs.vue'
@@ -126,11 +126,11 @@ whenever(
       >
         <SplitReveal
           v-if="tab === section"
-          :text="t(subtitle, locale)"
+          :text="t(subtitle, {}, { locale: locale })"
           :delay="260"
           :stagger="50"
         />
-        <template v-else>{{ t(subtitle, locale) }}</template>
+        <template v-else>{{ t(subtitle, {}, { locale: locale }) }}</template>
       </p>
     </div>
   </div>

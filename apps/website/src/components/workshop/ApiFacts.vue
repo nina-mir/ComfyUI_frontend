@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
 
-import type { Locale } from '../../i18n/translations'
-import { t } from '../../i18n/translations'
+import type { Locale } from '../../i18n/site'
+import { t } from '../../i18n/site'
 
 const {
   where,
@@ -26,7 +26,7 @@ const {
     <span
       class="text-xs font-bold tracking-widest text-primary-warm-gray uppercase"
     >
-      {{ t('workshop.api.needs', locale) }}
+      {{ t('workshop.api.needs', {}, { locale: locale }) }}
     </span>
     <p class="text-lg font-semibold text-primary-warm-white">{{ where }}</p>
     <div class="h-px bg-transparency-white-t8"></div>

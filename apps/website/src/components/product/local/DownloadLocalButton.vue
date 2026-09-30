@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Locale } from '../../../i18n/translations'
+import type { Locale } from '../../../i18n/site'
 import { computed } from 'vue'
 import type { HTMLAttributes } from 'vue'
 
@@ -8,7 +8,7 @@ import {
   downloadUrls,
   useDownloadUrl
 } from '../../../composables/useDownloadUrl'
-import { t } from '../../../i18n/translations'
+import { t } from '../../../i18n/site'
 import { captureDownloadClick } from '../../../scripts/posthog'
 import BrandButton from '../../common/BrandButton.vue'
 
@@ -19,7 +19,9 @@ const { locale = 'en', class: customClass = '' } = defineProps<{
 
 const { downloadUrl, platform, showFallback } = useDownloadUrl()
 
-const label = computed(() => t('download.hero.downloadLocal', locale))
+const label = computed(() =>
+  t('download.hero.downloadLocal', {}, { locale: locale })
+)
 
 const ICONS: Record<Platform, string> = {
   windows: '/icons/os/windows.svg',

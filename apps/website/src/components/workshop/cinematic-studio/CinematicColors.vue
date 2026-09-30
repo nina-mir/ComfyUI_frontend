@@ -4,9 +4,9 @@ import { nextTick, useTemplateRef } from 'vue'
 
 import { cn } from '@comfyorg/tailwind-utils'
 
-import type { Locale } from '../../../i18n/translations'
+import type { Locale } from '../../../i18n/site'
 import { MAX_COLORS } from '../../../lib/workshop/cinematic-studio/colors'
-import { tc } from '../../../lib/workshop/cinematic-studio/copy'
+import { studioT as tc } from '../../../lib/workshop/cinematic-studio/copy'
 
 const { locale = 'en' } = defineProps<{ locale?: Locale }>()
 
@@ -15,7 +15,7 @@ const main = defineModel<number | undefined>('main')
 
 const swatches = useTemplateRef<HTMLElement>('swatches')
 
-const t = (key: Parameters<typeof tc>[0]) => tc(key, locale)
+const t = (key: Parameters<typeof tc>[0]) => tc(key, {}, { locale: locale })
 
 function setColor(index: number, value: string) {
   colors.value = colors.value.map((color, at) => (at === index ? value : color))

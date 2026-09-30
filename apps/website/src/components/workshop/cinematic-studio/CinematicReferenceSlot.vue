@@ -4,8 +4,8 @@ import { computed, useTemplateRef } from 'vue'
 
 import { cn } from '@comfyorg/tailwind-utils'
 
-import type { Locale } from '../../../i18n/translations'
-import { tc } from '../../../lib/workshop/cinematic-studio/copy'
+import type { Locale } from '../../../i18n/site'
+import { studioT as tc } from '../../../lib/workshop/cinematic-studio/copy'
 import type { StudioImage } from '../../../lib/workshop/cinematic-studio/take-image'
 import type { ReferenceKind } from './reference-kind'
 import { REFERENCE_SLOTS } from './reference-kind'
@@ -20,9 +20,11 @@ const file = defineModel<StudioImage | undefined>()
 const preview = useImagePreview(() => file.value)
 const input = useTemplateRef<HTMLInputElement>('input')
 
-const label = computed(() => tc(REFERENCE_SLOTS[kind].label, locale))
+const label = computed(() =>
+  tc(REFERENCE_SLOTS[kind].label, {}, { locale: locale })
+)
 const accessibleName = computed(() => {
-  const action = tc(REFERENCE_SLOTS[kind].action, locale)
+  const action = tc(REFERENCE_SLOTS[kind].action, {}, { locale: locale })
   return file.value ? `${action}: ${file.value.name}` : action
 })
 
@@ -86,7 +88,7 @@ function choose(event: Event) {
       v-if="file"
       type="button"
       class="absolute top-1.5 right-1.5 grid size-7 place-items-center rounded-lg bg-primary-comfy-ink/70 text-primary-warm-white hover:bg-primary-comfy-ink"
-      :aria-label="tc('cinematic.reference.remove', locale)"
+      :aria-label="tc('cinematic.reference.remove', {}, { locale: locale })"
       @click="file = undefined"
     >
       <X class="size-3.5" aria-hidden="true" />

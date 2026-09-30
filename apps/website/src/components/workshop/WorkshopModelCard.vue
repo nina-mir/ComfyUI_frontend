@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 
 import type { WorkshopModel } from '../../config/models-catalogue'
-import type { Locale } from '../../i18n/translations'
-import { t } from '../../i18n/translations'
+import type { Locale } from '../../i18n/site'
+import { t } from '../../i18n/site'
 import HubTypeBadge from '../hub/HubTypeBadge.vue'
 import { getLogoPath } from '../../lib/hub/model-logos'
 import { nameWithoutTask, taskLabelFor } from '../../lib/workshop/task-label'
@@ -32,10 +32,10 @@ const workflowModels = computed(() =>
 )
 const providerName = computed(() =>
   model.type === 'APP'
-    ? t('workshop.card.comfyApp', locale)
+    ? t('workshop.card.comfyApp', {}, { locale: locale })
     : (workflowModels.value?.join(', ') ??
       model.provider ??
-      t('workshop.card.partnerNode', locale))
+      t('workshop.card.partnerNode', {}, { locale: locale }))
 )
 
 const logo = computed(

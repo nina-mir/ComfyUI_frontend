@@ -2,8 +2,8 @@
 import { ChevronDown, Clock, Maximize } from '@lucide/vue'
 
 import type { AspectRatio } from '../../../lib/workshop/cinematic-studio/catalog'
-import type { Locale } from '../../../i18n/translations'
-import { tc } from '../../../lib/workshop/cinematic-studio/copy'
+import type { Locale } from '../../../i18n/site'
+import { studioT as tc } from '../../../lib/workshop/cinematic-studio/copy'
 import type { CinematicVideoCapabilities } from '../../../lib/workshop/cinematic-studio/video'
 import { resolutionLabel } from '../../../lib/workshop/cinematic-studio/video'
 import { framedStyle } from './aspect-style'
@@ -43,14 +43,14 @@ const triggerClass =
   <div class="flex flex-col gap-3">
     <div
       role="group"
-      :aria-label="tc('cinematic.section.output', locale)"
+      :aria-label="tc('cinematic.section.output', {}, { locale: locale })"
       class="grid grid-cols-3 gap-2"
     >
       <CinematicMenu
         v-if="aspectOptions.length"
         v-model="aspectValue"
         :options="aspectOptions"
-        :heading="tc('cinematic.video.aspect', locale)"
+        :heading="tc('cinematic.video.aspect', {}, { locale: locale })"
         side="bottom"
         tooltip
         :trigger-class
@@ -71,7 +71,7 @@ const triggerClass =
         v-if="resolutionOptions.length"
         v-model="resolutionValue"
         :options="resolutionOptions"
-        :heading="tc('cinematic.video.resolution', locale)"
+        :heading="tc('cinematic.video.resolution', {}, { locale: locale })"
         side="bottom"
         tooltip
         :trigger-class
@@ -89,7 +89,7 @@ const triggerClass =
         v-if="durationOptions.length"
         v-model="durationValue"
         :options="durationOptions"
-        :heading="tc('cinematic.video.duration', locale)"
+        :heading="tc('cinematic.video.duration', {}, { locale: locale })"
         side="bottom"
         tooltip
         :trigger-class
@@ -116,7 +116,7 @@ const triggerClass =
         class="relative h-4 w-7 shrink-0 rounded-full bg-transparency-white-t20 transition-colors peer-checked:bg-primary-comfy-yellow peer-focus-visible:ring-3 peer-focus-visible:ring-primary-comfy-yellow/50 after:absolute after:top-0.5 after:left-0.5 after:size-3 after:rounded-full after:bg-primary-comfy-ink after:transition-transform peer-checked:after:translate-x-3"
         aria-hidden="true"
       />
-      {{ tc('cinematic.video.audio', locale) }}
+      {{ tc('cinematic.video.audio', {}, { locale: locale }) }}
     </label>
     <p class="text-xs/relaxed text-primary-warm-gray">
       {{
@@ -124,7 +124,8 @@ const triggerClass =
           durationOptions.length
             ? 'cinematic.video.oneClip'
             : 'cinematic.video.modelDecides',
-          locale
+          {},
+          { locale: locale }
         )
       }}
     </p>

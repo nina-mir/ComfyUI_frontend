@@ -7,8 +7,8 @@ import { useCinematicShot } from '../../../composables/useCinematicShot'
 import { reportStudioBusy } from '../../../composables/useStudioSwitchGuard'
 import { workshopAppRepo } from '../../../lib/workshop/apps'
 import type { CinematicModel } from '../../../lib/workshop/cinematic-studio/models'
-import type { Locale } from '../../../i18n/translations'
-import { tc } from '../../../lib/workshop/cinematic-studio/copy'
+import type { Locale } from '../../../i18n/site'
+import { studioT as tc } from '../../../lib/workshop/cinematic-studio/copy'
 import RunLeaveDialog from '../RunLeaveDialog.vue'
 import AppRepoLink from './AppRepoLink.vue'
 import AppsBackLink from './AppsBackLink.vue'
@@ -106,12 +106,12 @@ function generate() {
     <AppsBackLink :locale class="mb-3" />
     <div class="mb-6 flex flex-wrap items-center gap-3">
       <h1 class="text-2xl font-semibold text-primary-warm-white lg:text-3xl">
-        {{ tc('cinematic.title', locale) }}
+        {{ tc('cinematic.title', {}, { locale: locale }) }}
       </h1>
       <span
         class="rounded-full border border-transparency-white-t20 px-2 py-0.5 font-mono text-[10px] tracking-wider text-primary-comfy-canvas uppercase"
       >
-        {{ tc('cinematic.beta', locale) }}
+        {{ tc('cinematic.beta', {}, { locale: locale }) }}
       </span>
       <AppRepoLink
         :repo="workshopAppRepo('studio')"
@@ -120,7 +120,7 @@ function generate() {
       />
     </div>
     <p class="-mt-3 mb-6 text-lg text-primary-warm-gray">
-      {{ tc('cinematic.lead', locale) }}
+      {{ tc('cinematic.lead', {}, { locale: locale }) }}
     </p>
     <CinematicModeSwitch
       v-if="hasVideo"

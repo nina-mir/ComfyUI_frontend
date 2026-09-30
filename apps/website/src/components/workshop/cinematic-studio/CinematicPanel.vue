@@ -11,9 +11,9 @@ import type {
 } from '../../../lib/workshop/cinematic-studio/catalog'
 import type { ShotEstimate } from '../../../lib/workshop/cinematic-studio/estimate'
 import type { StudioGate } from '../../../lib/workshop/cinematic-studio/gate'
-import type { Locale } from '../../../i18n/translations'
-import { t } from '../../../i18n/translations'
-import { tc } from '../../../lib/workshop/cinematic-studio/copy'
+import type { Locale } from '../../../i18n/site'
+import { t } from '../../../i18n/site'
+import { studioT as tc } from '../../../lib/workshop/cinematic-studio/copy'
 import type { CinematicModel } from '../../../lib/workshop/cinematic-studio/models'
 import { shotAspects } from '../../../lib/workshop/cinematic-studio/models'
 import type { CinematicVideoCapabilities } from '../../../lib/workshop/cinematic-studio/video'
@@ -87,7 +87,10 @@ const modelOptions = computed(() =>
     id: model.slug,
     label: model.name,
     logo: model.logo,
-    meta: videoTags(model.video, tc('cinematic.video.audioTag', locale))
+    meta: videoTags(
+      model.video,
+      tc('cinematic.video.audioTag', {}, { locale: locale })
+    )
   }))
 )
 const model = computed(() =>
@@ -95,7 +98,9 @@ const model = computed(() =>
 )
 const slots = computed(() => referenceSlots(model.value, !!firstFrame.value))
 const blockedNote = computed(() =>
-  blocked ? tc(blocked.key, locale, { model: blocked.model }) : undefined
+  blocked
+    ? tc(blocked.key, { model: blocked.model }, { locale: locale })
+    : undefined
 )
 const canGenerate = computed(
   () => gate === 'ready' && scene.value.trim().length > 0 && !blockedNote.value
@@ -107,23 +112,23 @@ const cardClass =
 
 <template>
   <aside
-    :aria-label="tc('cinematic.panel.label', locale)"
+    :aria-label="tc('cinematic.panel.label', {}, { locale: locale })"
     class="flex min-w-0 flex-col rounded-2xl border border-transparency-white-t8 bg-transparency-white-t4"
   >
     <header
       class="border-b border-transparency-white-t8 px-5 py-3 text-xs font-bold tracking-wider text-primary-comfy-canvas uppercase"
     >
-      {{ t('workshop.input.title', locale) }}
+      {{ t('workshop.input.title', {}, { locale: locale }) }}
     </header>
     <div class="flex flex-col gap-5 p-4">
       <section class="flex flex-col gap-2">
         <h2 :class="labelClass">
-          {{ tc('cinematic.model.heading', locale) }}
+          {{ tc('cinematic.model.heading', {}, { locale: locale }) }}
         </h2>
         <CinematicMenu
           v-model="modelSlug"
           :options="modelOptions"
-          :heading="tc('cinematic.model.heading', locale)"
+          :heading="tc('cinematic.model.heading', {}, { locale: locale })"
           :show-heading="false"
           side="bottom"
           :trigger-class="cn(cardClass, 'h-11 gap-3 px-3')"
@@ -153,7 +158,7 @@ const cardClass =
       </CinematicSceneField>
       <section class="flex flex-col gap-2">
         <h2 :class="labelClass">
-          {{ tc('cinematic.section.shot', locale) }}
+          {{ tc('cinematic.section.shot', {}, { locale: locale }) }}
         </h2>
         <CinematicShotList
           :direction
@@ -166,10 +171,10 @@ const cardClass =
       <section v-if="video" class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <h2 :class="labelClass">
-            {{ tc('cinematic.section.references', locale) }}
+            {{ tc('cinematic.section.references', {}, { locale: locale }) }}
           </h2>
           <span class="text-xs text-primary-warm-gray">
-            {{ tc('cinematic.reference.optional', locale) }}
+            {{ tc('cinematic.reference.optional', {}, { locale: locale }) }}
           </span>
         </div>
         <div class="grid grid-cols-2 gap-2">
@@ -196,7 +201,7 @@ const cardClass =
       </section>
       <section class="flex flex-col gap-2">
         <h2 :class="labelClass">
-          {{ tc('cinematic.section.output', locale) }}
+          {{ tc('cinematic.section.output', {}, { locale: locale }) }}
         </h2>
         <CinematicVideoControls
           v-if="video"
