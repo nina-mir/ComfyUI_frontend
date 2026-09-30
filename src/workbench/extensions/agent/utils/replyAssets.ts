@@ -29,7 +29,14 @@ export function isReplyAudioAsset(asset: ReplyAsset): asset is ReplyAudioAsset {
   return asset.kind === 'audio'
 }
 
-const ASSET_KINDS = new Set<MediaType>(['image', 'video', 'audio', '3D'])
+export function isReplyAssetKind(value: MediaType): value is ReplyAssetKind {
+  return (
+    value === 'image' ||
+    value === 'video' ||
+    value === 'audio' ||
+    value === '3D'
+  )
+}
 
 export function classifyAssetUrl(
   href: string,
@@ -49,8 +56,8 @@ export function classifyAssetUrl(
   }
   if (!filename) return null
   const kind = getMediaTypeFromFilename(filename)
-  if (!ASSET_KINDS.has(kind)) return null
-  return { url: href, filename, kind: kind as ReplyAssetKind }
+  if (!isReplyAssetKind(kind)) return null
+  return { url: href, filename, kind }
 }
 
 type InlineToken = { type: string; href?: string; text?: string }
@@ -134,6 +141,7 @@ export function replyAssetResultItem(asset: ReplyAsset): AugmentedResultItem {
     type: 'output',
     nodeId: '',
     mediaType: asset.kind === 'image' ? 'images' : asset.kind,
+    mediaTypeIsResolved: true,
     url: asset.url
   }
 }

@@ -25,7 +25,7 @@ const { t } = useI18n()
       v-for="asset in assets"
       :key="asset.url"
       :asset
-      :title="assetNames[asset.url] || asset.filename"
+      :title="assetNames[asset.url] || asset.label || asset.filename"
     />
     <Button
       v-if="collapsible"

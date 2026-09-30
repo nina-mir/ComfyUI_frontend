@@ -381,6 +381,7 @@ describe('Load3d', () => {
           height: 600,
           state: { clearColor: new THREE.Color(0x000000), clearAlpha: 0 },
           renderer: {
+            state: { reset: vi.fn() },
             setViewport,
             setScissor,
             setScissorTest,
@@ -687,7 +688,7 @@ describe('Load3d', () => {
         view: {
           beginRender,
           blit,
-          renderer: { setScissorTest: vi.fn() }
+          renderer: { setScissorTest: vi.fn(), state: { reset: vi.fn() } }
         }
       })
 
@@ -1529,6 +1530,7 @@ describe('Load3d', () => {
       const view = {
         canvas,
         renderer: {
+          state: { reset: vi.fn() },
           setViewport: vi.fn(),
           setScissor: vi.fn(),
           setScissorTest: vi.fn(),

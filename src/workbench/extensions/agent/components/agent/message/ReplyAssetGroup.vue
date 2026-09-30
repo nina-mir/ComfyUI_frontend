@@ -359,7 +359,7 @@ function inspect(asset: ReplyVisualAssetData): void {
   if (asset.kind === '3D') {
     useDialogStore().showDialog({
       key: 'asset-3d-viewer',
-      title: assetNames.value[asset.url] || asset.filename,
+      title: assetNames.value[asset.url] || asset.label || asset.filename,
       component: Load3dViewerContent,
       props: { modelUrl: asset.url },
       dialogComponentProps: {

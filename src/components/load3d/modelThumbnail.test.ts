@@ -199,7 +199,10 @@ describe('generateModelThumbnail', () => {
       expect.objectContaining({
         message: 'failed https://example.com/model.glb'
       }),
-      { errorType: 'agent_model_thumbnail_generation_failure' }
+      {
+        errorType: 'agent_model_thumbnail_generation_failure',
+        surface: 'agent'
+      }
     )
   })
 

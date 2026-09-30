@@ -88,7 +88,8 @@ function renderThumbnailWithTimeout(
         if (error === RENDER_CANCELLED) return { status: 'cancelled' }
         if (error instanceof TimeoutError) return { status: 'timedOut' }
         reportError(redactTelemetryError(error), {
-          errorType: 'agent_model_thumbnail_generation_failure'
+          errorType: 'agent_model_thumbnail_generation_failure',
+          surface: 'agent'
         })
         return { status: 'failed' }
       }
