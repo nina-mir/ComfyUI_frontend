@@ -935,6 +935,34 @@ export function useAgentSession(deps: AgentSessionDeps) {
     })
   }
 
+  function handleAskFailure(
+    error: unknown,
+    threadId: string,
+    messageId: TurnId,
+    askId: string
+  ): false {
+    setAskAnswering(askId, false)
+    if (error instanceof AgentApiError && error.status === 409) {
+      conversationStore.ingest({
+        type: 'agent_ask_resolved',
+        data: {
+          thread_id: threadId,
+          message_id: messageId,
+          ask_id: askId,
+          status: 'answered',
+          selected: null
+        }
+      })
+      return false
+    }
+    reportError(error, { errorType: 'agent_ask_answer_failed' })
+    pushError(error instanceof Error ? error.message : String(error))
+    trackAgentError('ask_answer_failed', 'post_acceptance', 'error_overlay', {
+      retryable: isRetryableRequestFailure(error, false)
+    })
+    return false
+  }
+
   async function stopTurn(method?: AgentStopMethod): Promise<void> {
     const generation = loadGeneration
     const storageOwnerAtStop = getStorageIdentity()
@@ -997,26 +1025,7 @@ export function useAgentSession(deps: AgentSessionDeps) {
       return true
     } catch (error) {
       if (!isCurrentAnswer()) return false
-      setAskAnswering(askId, false)
-      if (error instanceof AgentApiError && error.status === 409) {
-        conversationStore.ingest({
-          type: 'agent_ask_resolved',
-          data: {
-            thread_id: currentThreadId,
-            message_id: messageId,
-            ask_id: askId,
-            status: 'answered',
-            selected: null
-          }
-        })
-        return false
-      }
-      reportError(error, { errorType: 'agent_ask_answer_failed' })
-      pushError(error instanceof Error ? error.message : String(error))
-      trackAgentError('ask_answer_failed', 'post_acceptance', 'error_overlay', {
-        retryable: isRetryableRequestFailure(error, false)
-      })
-      return false
+      return handleAskFailure(error, currentThreadId, messageId, askId)
     }
   }
 
