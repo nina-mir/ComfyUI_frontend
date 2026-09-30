@@ -102,42 +102,37 @@ describe('generateModelThumbnail', () => {
   })
 
   it('advances the queue without releasing the underlying work slot', async () => {
-    vi.useFakeTimers()
-    try {
-      const pendingLoad = deferred<'cancelled'>()
-      const stalled = mockInstance({
-        loadModel: vi.fn<Load3d['loadModel']>(() => pendingLoad.promise)
-      })
-      const next = mockInstance()
-      createLoad3d.mockReturnValueOnce(stalled).mockReturnValueOnce(next)
-      const controller = new AbortController()
+    const pendingLoad = deferred<'cancelled'>()
+    const stalled = mockInstance({
+      loadModel: vi.fn<Load3d['loadModel']>(() => pendingLoad.promise)
+    })
+    const next = mockInstance()
+    createLoad3d.mockReturnValueOnce(stalled).mockReturnValueOnce(next)
+    const controller = new AbortController()
 
-      const abortedRun = generateModelThumbnail(
-        '/slow.glb',
-        'slow.glb',
-        controller.signal
-      )
-      const nextRun = generateModelThumbnail('/next.glb', 'next.glb')
-      await vi.advanceTimersByTimeAsync(0)
-      expect(createLoad3d).toHaveBeenCalledTimes(1)
+    const abortedRun = generateModelThumbnail(
+      '/slow.glb',
+      'slow.glb',
+      controller.signal
+    )
+    const nextRun = generateModelThumbnail('/next.glb', 'next.glb')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(createLoad3d).toHaveBeenCalledTimes(1)
 
-      controller.abort()
-      await vi.advanceTimersByTimeAsync(0)
+    controller.abort()
+    await vi.advanceTimersByTimeAsync(0)
 
-      await expect(abortedRun).resolves.toEqual({ status: 'cancelled' })
-      await expect(nextRun).resolves.toEqual({
-        status: 'rendered',
-        dataUrl: 'data:image/png;base64,thumb'
-      })
-      expect(stalled.remove).toHaveBeenCalledOnce()
-      expect(vi.getTimerCount()).toBe(0)
-      expect(reportError).not.toHaveBeenCalled()
-      expect(releaseSharedRenderer).not.toHaveBeenCalled()
-      pendingLoad.resolve('cancelled')
-      await vi.advanceTimersByTimeAsync(0)
-    } finally {
-      vi.useRealTimers()
-    }
+    await expect(abortedRun).resolves.toEqual({ status: 'cancelled' })
+    await expect(nextRun).resolves.toEqual({
+      status: 'rendered',
+      dataUrl: 'data:image/png;base64,thumb'
+    })
+    expect(stalled.remove).toHaveBeenCalledOnce()
+    expect(vi.getTimerCount()).toBe(0)
+    expect(reportError).not.toHaveBeenCalled()
+    expect(releaseSharedRenderer).not.toHaveBeenCalled()
+    pendingLoad.resolve('cancelled')
+    await vi.advanceTimersByTimeAsync(0)
   })
 
   it('skips a queued render whose caller aborted before its turn', async () => {
@@ -149,25 +144,20 @@ describe('generateModelThumbnail', () => {
     createLoad3d.mockReturnValueOnce(blocked).mockReturnValueOnce(skipped)
     const controller = new AbortController()
 
-    vi.useFakeTimers()
-    try {
-      const blockedRun = generateModelThumbnail('/stuck.glb', 'stuck.glb')
-      const skippedRun = generateModelThumbnail(
-        '/next.glb',
-        'next.glb',
-        controller.signal
-      )
-      controller.abort()
-      await vi.advanceTimersByTimeAsync(15_000)
+    const blockedRun = generateModelThumbnail('/stuck.glb', 'stuck.glb')
+    const skippedRun = generateModelThumbnail(
+      '/next.glb',
+      'next.glb',
+      controller.signal
+    )
+    controller.abort()
+    await vi.advanceTimersByTimeAsync(15_000)
 
-      await expect(blockedRun).resolves.toEqual({ status: 'timedOut' })
-      await expect(skippedRun).resolves.toEqual({ status: 'cancelled' })
-      expect(createLoad3d).toHaveBeenCalledTimes(1)
-      pendingLoad.resolve('cancelled')
-      await vi.advanceTimersByTimeAsync(0)
-    } finally {
-      vi.useRealTimers()
-    }
+    await expect(blockedRun).resolves.toEqual({ status: 'timedOut' })
+    await expect(skippedRun).resolves.toEqual({ status: 'cancelled' })
+    expect(createLoad3d).toHaveBeenCalledTimes(1)
+    pendingLoad.resolve('cancelled')
+    await vi.advanceTimersByTimeAsync(0)
   })
 
   it('reports a failed render and still disposes the instance', async () => {
@@ -333,67 +323,57 @@ describe('generateModelThumbnail', () => {
   })
 
   it('times out a stuck load, disposes it, and advances the queue', async () => {
-    vi.useFakeTimers()
-    try {
-      const pendingLoad = deferred<'cancelled'>()
-      const stuck = mockInstance({
-        loadModel: vi.fn<Load3d['loadModel']>(() => pendingLoad.promise)
-      })
-      const next = mockInstance()
-      createLoad3d.mockReturnValueOnce(stuck).mockReturnValueOnce(next)
+    const pendingLoad = deferred<'cancelled'>()
+    const stuck = mockInstance({
+      loadModel: vi.fn<Load3d['loadModel']>(() => pendingLoad.promise)
+    })
+    const next = mockInstance()
+    createLoad3d.mockReturnValueOnce(stuck).mockReturnValueOnce(next)
 
-      const stuckRun = generateModelThumbnail('/stuck.glb', 'stuck.glb')
-      const nextRun = generateModelThumbnail('/next.glb', 'next.glb')
-      await vi.waitFor(() => expect(createLoad3d).toHaveBeenCalledTimes(1))
+    const stuckRun = generateModelThumbnail('/stuck.glb', 'stuck.glb')
+    const nextRun = generateModelThumbnail('/next.glb', 'next.glb')
+    await vi.waitFor(() => expect(createLoad3d).toHaveBeenCalledTimes(1))
 
-      await vi.advanceTimersByTimeAsync(15_000)
+    await vi.advanceTimersByTimeAsync(15_000)
 
-      await expect(stuckRun).resolves.toEqual({ status: 'timedOut' })
-      await expect(nextRun).resolves.toEqual({
-        status: 'rendered',
-        dataUrl: 'data:image/png;base64,thumb'
-      })
-      expect(stuck.remove).toHaveBeenCalledTimes(1)
-      expect(reportError).not.toHaveBeenCalled()
-      expect(next.loadModel).toHaveBeenCalledWith('/next.glb', undefined, {
-        silent: true
-      })
-      pendingLoad.resolve('cancelled')
-      await vi.advanceTimersByTimeAsync(0)
-    } finally {
-      vi.useRealTimers()
-    }
+    await expect(stuckRun).resolves.toEqual({ status: 'timedOut' })
+    await expect(nextRun).resolves.toEqual({
+      status: 'rendered',
+      dataUrl: 'data:image/png;base64,thumb'
+    })
+    expect(stuck.remove).toHaveBeenCalledTimes(1)
+    expect(reportError).not.toHaveBeenCalled()
+    expect(next.loadModel).toHaveBeenCalledWith('/next.glb', undefined, {
+      silent: true
+    })
+    pendingLoad.resolve('cancelled')
+    await vi.advanceTimersByTimeAsync(0)
   })
 
   it('times out a stuck capture and advances the queue', async () => {
-    vi.useFakeTimers()
-    try {
-      const pendingCapture = deferred<string>()
-      const stuck = mockInstance({
-        captureThumbnail: vi.fn(() => pendingCapture.promise)
-      })
-      const next = mockInstance()
-      createLoad3d.mockReturnValueOnce(stuck).mockReturnValueOnce(next)
+    const pendingCapture = deferred<string>()
+    const stuck = mockInstance({
+      captureThumbnail: vi.fn(() => pendingCapture.promise)
+    })
+    const next = mockInstance()
+    createLoad3d.mockReturnValueOnce(stuck).mockReturnValueOnce(next)
 
-      const stuckRun = generateModelThumbnail('/stuck.glb', 'stuck.glb')
-      const nextRun = generateModelThumbnail('/next.glb', 'next.glb')
-      await vi.waitFor(() => expect(stuck.captureThumbnail).toHaveBeenCalled())
+    const stuckRun = generateModelThumbnail('/stuck.glb', 'stuck.glb')
+    const nextRun = generateModelThumbnail('/next.glb', 'next.glb')
+    await vi.waitFor(() => expect(stuck.captureThumbnail).toHaveBeenCalled())
 
-      await vi.advanceTimersByTimeAsync(15_000)
+    await vi.advanceTimersByTimeAsync(15_000)
 
-      await expect(stuckRun).resolves.toEqual({ status: 'timedOut' })
-      await expect(nextRun).resolves.toEqual({
-        status: 'rendered',
-        dataUrl: 'data:image/png;base64,thumb'
-      })
-      expect(stuck.remove).toHaveBeenCalledOnce()
-      expect(reportError).not.toHaveBeenCalled()
-      expect(next.captureThumbnail).toHaveBeenCalledOnce()
-      pendingCapture.resolve('data:image/png;base64,late')
-      await vi.advanceTimersByTimeAsync(0)
-    } finally {
-      vi.useRealTimers()
-    }
+    await expect(stuckRun).resolves.toEqual({ status: 'timedOut' })
+    await expect(nextRun).resolves.toEqual({
+      status: 'rendered',
+      dataUrl: 'data:image/png;base64,thumb'
+    })
+    expect(stuck.remove).toHaveBeenCalledOnce()
+    expect(reportError).not.toHaveBeenCalled()
+    expect(next.captureThumbnail).toHaveBeenCalledOnce()
+    pendingCapture.resolve('data:image/png;base64,late')
+    await vi.advanceTimersByTimeAsync(0)
   })
 
   it('persists a supported asset thumbnail after rendering', async () => {

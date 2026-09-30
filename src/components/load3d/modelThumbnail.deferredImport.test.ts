@@ -55,7 +55,6 @@ describe('generateModelThumbnail deferred createLoad3d import', () => {
   })
 
   it('times out module acquisition and advances the queued successor', async () => {
-    vi.useFakeTimers()
     const timedOut = generateModelThumbnail('/deferred.glb', 'deferred.glb')
     const nextController = new AbortController()
     const next = generateModelThumbnail(

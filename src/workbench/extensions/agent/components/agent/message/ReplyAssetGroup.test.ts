@@ -267,53 +267,41 @@ describe('ReplyAssetGroup', () => {
     findServerPreviewUrl
       .mockRejectedValueOnce(new Error('preview lookup failed'))
       .mockResolvedValueOnce('https://x/mesh_preview.png')
-    vi.useFakeTimers()
-    try {
-      renderGroup([model])
-      await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
+    renderGroup([model])
+    await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
 
-      await vi.advanceTimersByTimeAsync(2_000)
+    await vi.advanceTimersByTimeAsync(2_000)
 
-      expect(findServerPreviewUrl).toHaveBeenCalledTimes(2)
-      expect(screen.getByRole('img', { name: 'mesh.glb' })).toHaveAttribute(
-        'src',
-        'https://x/mesh_preview.png'
-      )
-    } finally {
-      vi.useRealTimers()
-    }
+    expect(findServerPreviewUrl).toHaveBeenCalledTimes(2)
+    expect(screen.getByRole('img', { name: 'mesh.glb' })).toHaveAttribute(
+      'src',
+      'https://x/mesh_preview.png'
+    )
   })
 
   it('cancels a pending retry when the viewer close finds a server preview', async () => {
     isAssetPreviewSupported.mockReturnValue(true)
-    vi.useFakeTimers()
-    try {
-      renderGroup([model])
-      await vi.waitFor(() =>
-        expect(generateModelThumbnail).toHaveBeenCalledOnce()
-      )
-      await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
-
-      findServerPreviewUrl.mockResolvedValue('https://x/mesh_preview.png')
-      await userEvent.click(screen.getByRole('button', { name: 'mesh.glb' }))
-      const dialog = vi
-        .mocked(useDialogStore().showDialog)
-        .mock.calls.at(-1)?.[0]
-      const onClose = dialog?.dialogComponentProps?.onClose
-      if (typeof onClose !== 'function') throw new Error('Expected onClose')
-      onClose()
-      await vi.advanceTimersByTimeAsync(0)
-
-      expect(vi.getTimerCount()).toBe(0)
-      await vi.advanceTimersByTimeAsync(10_000)
+    renderGroup([model])
+    await vi.waitFor(() =>
       expect(generateModelThumbnail).toHaveBeenCalledOnce()
-      expect(screen.getByRole('img', { name: 'mesh.glb' })).toHaveAttribute(
-        'src',
-        'https://x/mesh_preview.png'
-      )
-    } finally {
-      vi.useRealTimers()
-    }
+    )
+    await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
+
+    findServerPreviewUrl.mockResolvedValue('https://x/mesh_preview.png')
+    await userEvent.click(screen.getByRole('button', { name: 'mesh.glb' }))
+    const dialog = vi.mocked(useDialogStore().showDialog).mock.calls.at(-1)?.[0]
+    const onClose = dialog?.dialogComponentProps?.onClose
+    if (typeof onClose !== 'function') throw new Error('Expected onClose')
+    onClose()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(vi.getTimerCount()).toBe(0)
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(generateModelThumbnail).toHaveBeenCalledOnce()
+    expect(screen.getByRole('img', { name: 'mesh.glb' })).toHaveAttribute(
+      'src',
+      'https://x/mesh_preview.png'
+    )
   })
 
   it('leaves a model that failed to render as a placeholder', async () => {
@@ -338,159 +326,124 @@ describe('ReplyAssetGroup', () => {
         status: 'rendered',
         dataUrl: 'data:image/png;base64,retried'
       })
-    vi.useFakeTimers()
-    try {
-      renderGroup([model])
-      await vi.waitFor(() =>
-        expect(generateModelThumbnail).toHaveBeenCalledOnce()
-      )
+    renderGroup([model])
+    await vi.waitFor(() =>
+      expect(generateModelThumbnail).toHaveBeenCalledOnce()
+    )
 
-      await vi.advanceTimersByTimeAsync(2_000)
+    await vi.advanceTimersByTimeAsync(2_000)
 
-      expect(generateModelThumbnail).toHaveBeenCalledTimes(2)
-      expect(screen.getByRole('img', { name: 'mesh.glb' })).toHaveAttribute(
-        'src',
-        'data:image/png;base64,retried'
-      )
-    } finally {
-      vi.useRealTimers()
-    }
+    expect(generateModelThumbnail).toHaveBeenCalledTimes(2)
+    expect(screen.getByRole('img', { name: 'mesh.glb' })).toHaveAttribute(
+      'src',
+      'data:image/png;base64,retried'
+    )
   })
 
   it('bounds sustained queue backpressure with exponential retries and one server lookup', async () => {
     isAssetPreviewSupported.mockReturnValue(true)
     generateModelThumbnail.mockResolvedValue({ status: 'busy' })
-    vi.useFakeTimers()
-    try {
-      renderGroup([model])
-      await vi.advanceTimersByTimeAsync(0)
-      expect(generateModelThumbnail).toHaveBeenCalledOnce()
+    renderGroup([model])
+    await vi.advanceTimersByTimeAsync(0)
+    expect(generateModelThumbnail).toHaveBeenCalledOnce()
 
-      const retryDelays = [2, 4, 8, 16, 32, 64, 128, 256, 480]
-      for (const [index, delaySeconds] of retryDelays.entries()) {
-        await vi.advanceTimersByTimeAsync(delaySeconds * 1000 - 1)
-        expect(generateModelThumbnail).toHaveBeenCalledTimes(index + 1)
-        await vi.advanceTimersByTimeAsync(1)
-        expect(generateModelThumbnail).toHaveBeenCalledTimes(index + 2)
-      }
-
-      expect(findServerPreviewUrl).toHaveBeenCalledOnce()
-      expect(vi.getTimerCount()).toBe(0)
-    } finally {
-      vi.useRealTimers()
+    const retryDelays = [2, 4, 8, 16, 32, 64, 128, 256, 480]
+    for (const [index, delaySeconds] of retryDelays.entries()) {
+      await vi.advanceTimersByTimeAsync(delaySeconds * 1000 - 1)
+      expect(generateModelThumbnail).toHaveBeenCalledTimes(index + 1)
+      await vi.advanceTimersByTimeAsync(1)
+      expect(generateModelThumbnail).toHaveBeenCalledTimes(index + 2)
     }
+
+    expect(findServerPreviewUrl).toHaveBeenCalledOnce()
+    expect(vi.getTimerCount()).toBe(0)
   })
 
   it('cancels a backpressure retry when hidden and restarts cleanly when shown', async () => {
     isAssetPreviewSupported.mockReturnValue(true)
     generateModelThumbnail.mockResolvedValue({ status: 'busy' })
-    vi.useFakeTimers()
-    try {
-      const { rerender } = renderGroup([model])
-      await vi.waitFor(() =>
-        expect(generateModelThumbnail).toHaveBeenCalledOnce()
-      )
-      await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
-      await rerender({ assets: [audio] })
-      await vi.advanceTimersByTimeAsync(60_000)
+    const { rerender } = renderGroup([model])
+    await vi.waitFor(() =>
       expect(generateModelThumbnail).toHaveBeenCalledOnce()
+    )
+    await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
+    await rerender({ assets: [audio] })
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(generateModelThumbnail).toHaveBeenCalledOnce()
 
-      await rerender({ assets: [model] })
-      await vi.waitFor(() =>
-        expect(generateModelThumbnail).toHaveBeenCalledTimes(2)
-      )
-      expect(findServerPreviewUrl).toHaveBeenCalledTimes(2)
-      await vi.advanceTimersByTimeAsync(991_000)
-      expect(generateModelThumbnail).toHaveBeenCalledTimes(10)
-      expect(vi.getTimerCount()).toBe(0)
-    } finally {
-      vi.useRealTimers()
-    }
+    await rerender({ assets: [model] })
+    await vi.waitFor(() =>
+      expect(generateModelThumbnail).toHaveBeenCalledTimes(2)
+    )
+    expect(findServerPreviewUrl).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(991_000)
+    expect(generateModelThumbnail).toHaveBeenCalledTimes(10)
+    expect(vi.getTimerCount()).toBe(0)
   })
 
   it('cancels a backpressure retry when unmounted', async () => {
     isAssetPreviewSupported.mockReturnValue(true)
     generateModelThumbnail.mockResolvedValue({ status: 'busy' })
-    vi.useFakeTimers()
-    try {
-      const { unmount } = renderGroup([model])
-      await vi.waitFor(() =>
-        expect(generateModelThumbnail).toHaveBeenCalledOnce()
-      )
-      await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
-      unmount()
-      await vi.advanceTimersByTimeAsync(60_000)
+    const { unmount } = renderGroup([model])
+    await vi.waitFor(() =>
       expect(generateModelThumbnail).toHaveBeenCalledOnce()
-      expect(vi.getTimerCount()).toBe(0)
-    } finally {
-      vi.useRealTimers()
-    }
+    )
+    await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
+    unmount()
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(generateModelThumbnail).toHaveBeenCalledOnce()
+    expect(vi.getTimerCount()).toBe(0)
   })
 
   it('bounds retries to exactly the initial attempt plus MAX_THUMBNAIL_RETRIES', async () => {
     isAssetPreviewSupported.mockReturnValue(true)
-    vi.useFakeTimers()
-    try {
-      renderGroup([model])
-      await vi.waitFor(() =>
-        expect(generateModelThumbnail).toHaveBeenCalledOnce()
-      )
+    renderGroup([model])
+    await vi.waitFor(() =>
+      expect(generateModelThumbnail).toHaveBeenCalledOnce()
+    )
 
-      await vi.advanceTimersByTimeAsync(2_000)
-      expect(generateModelThumbnail).toHaveBeenCalledTimes(2)
-      await vi.advanceTimersByTimeAsync(2_000)
-      expect(generateModelThumbnail).toHaveBeenCalledTimes(3)
+    await vi.advanceTimersByTimeAsync(2_000)
+    expect(generateModelThumbnail).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(2_000)
+    expect(generateModelThumbnail).toHaveBeenCalledTimes(3)
 
-      expect(vi.getTimerCount()).toBe(0)
-      await vi.advanceTimersByTimeAsync(10_000)
-      expect(generateModelThumbnail).toHaveBeenCalledTimes(3)
-    } finally {
-      vi.useRealTimers()
-    }
+    expect(vi.getTimerCount()).toBe(0)
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(generateModelThumbnail).toHaveBeenCalledTimes(3)
   })
 
   it('cancels a pending retry timer when the asset is hidden', async () => {
     isAssetPreviewSupported.mockReturnValue(true)
-    vi.useFakeTimers()
-    try {
-      const { rerender } = renderGroup([model])
-      await vi.waitFor(() =>
-        expect(generateModelThumbnail).toHaveBeenCalledOnce()
-      )
-      await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
-
-      await rerender({ assets: [audio] })
-
-      await vi.advanceTimersByTimeAsync(10_000)
+    const { rerender } = renderGroup([model])
+    await vi.waitFor(() =>
       expect(generateModelThumbnail).toHaveBeenCalledOnce()
-      expect(vi.getTimerCount()).toBe(0)
-    } finally {
-      vi.useRealTimers()
-    }
+    )
+    await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
+
+    await rerender({ assets: [audio] })
+
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(generateModelThumbnail).toHaveBeenCalledOnce()
+    expect(vi.getTimerCount()).toBe(0)
   })
 
   it('preserves the spent retry attempt when a pending retry is hidden', async () => {
     isAssetPreviewSupported.mockReturnValue(true)
-    vi.useFakeTimers()
-    try {
-      const { rerender } = renderGroup([model])
-      await vi.waitFor(() =>
-        expect(generateModelThumbnail).toHaveBeenCalledOnce()
-      )
-      await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
+    const { rerender } = renderGroup([model])
+    await vi.waitFor(() =>
+      expect(generateModelThumbnail).toHaveBeenCalledOnce()
+    )
+    await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
 
-      await rerender({ assets: [audio] })
-      await rerender({ assets: [model] })
-      await vi.waitFor(() =>
-        expect(generateModelThumbnail).toHaveBeenCalledTimes(2)
-      )
-      await vi.advanceTimersByTimeAsync(2_000)
+    await rerender({ assets: [audio] })
+    await rerender({ assets: [model] })
+    await vi.waitFor(() =>
+      expect(generateModelThumbnail).toHaveBeenCalledTimes(2)
+    )
+    await vi.advanceTimersByTimeAsync(2_000)
 
-      expect(generateModelThumbnail).toHaveBeenCalledTimes(3)
-      expect(vi.getTimerCount()).toBe(0)
-    } finally {
-      vi.useRealTimers()
-    }
+    expect(generateModelThumbnail).toHaveBeenCalledTimes(3)
+    expect(vi.getTimerCount()).toBe(0)
   })
 
   it('aborts queued generation when unmounted', async () => {
@@ -517,31 +470,24 @@ describe('ReplyAssetGroup', () => {
   })
 
   it('clears a pending thumbnail refresh when unmounted', async () => {
-    vi.useFakeTimers()
-    try {
-      isAssetPreviewSupported.mockReturnValue(true)
-      const { unmount } = renderGroup([model])
-      await vi.waitFor(() => expect(findServerPreviewUrl).toHaveBeenCalled())
-      await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
-      await userEvent.click(screen.getByRole('button', { name: 'mesh.glb' }))
-      const dialog = vi
-        .mocked(useDialogStore().showDialog)
-        .mock.calls.at(-1)?.[0]
-      const onClose = dialog?.dialogComponentProps?.onClose
-      if (typeof onClose !== 'function') throw new Error('Expected onClose')
-      onClose()
-      await vi.advanceTimersByTimeAsync(0)
-      const callsBeforeUnmount = findServerPreviewUrl.mock.calls.length
-      expect(vi.getTimerCount()).toBe(1)
+    isAssetPreviewSupported.mockReturnValue(true)
+    const { unmount } = renderGroup([model])
+    await vi.waitFor(() => expect(findServerPreviewUrl).toHaveBeenCalled())
+    await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1))
+    await userEvent.click(screen.getByRole('button', { name: 'mesh.glb' }))
+    const dialog = vi.mocked(useDialogStore().showDialog).mock.calls.at(-1)?.[0]
+    const onClose = dialog?.dialogComponentProps?.onClose
+    if (typeof onClose !== 'function') throw new Error('Expected onClose')
+    onClose()
+    await vi.advanceTimersByTimeAsync(0)
+    const callsBeforeUnmount = findServerPreviewUrl.mock.calls.length
+    expect(vi.getTimerCount()).toBe(1)
 
-      unmount()
-      expect(vi.getTimerCount()).toBe(0)
+    unmount()
+    expect(vi.getTimerCount()).toBe(0)
 
-      await vi.advanceTimersByTimeAsync(2_000)
-      expect(findServerPreviewUrl).toHaveBeenCalledTimes(callsBeforeUnmount)
-    } finally {
-      vi.useRealTimers()
-    }
+    await vi.advanceTimersByTimeAsync(2_000)
+    expect(findServerPreviewUrl).toHaveBeenCalledTimes(callsBeforeUnmount)
   })
 
   it('refreshes the tile thumbnail after the viewer closes', async () => {
