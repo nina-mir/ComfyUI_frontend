@@ -2018,6 +2018,7 @@ describe('AgentPanelRoot standing credits-exhausted paywall', () => {
 
     await waitFor(() =>
       expect(reportError).toHaveBeenCalledWith(refreshError, {
+        surface: 'agent',
         errorType: 'error_refreshing_agent_billing_status'
       })
     )
@@ -3548,6 +3549,7 @@ describe('AgentPanelRoot attach flow', () => {
       })
     )
     expect(reportError).toHaveBeenCalledWith(expect.any(Error), {
+      surface: 'agent',
       errorType: 'agent_attachment_upload_failed',
       tags: {
         failure_kind: 'caught_unexpected',
@@ -4577,7 +4579,7 @@ describe('AgentPanelRoot workflow binding', () => {
     await waitFor(() => expect(bodies).toHaveLength(1))
   })
 
-  it('does not resume a consent-held send after the panel unmounts', async () => {
+  it('does not resume a consent-held send after closing in App Mode', async () => {
     makeTab('wf-42')
     const bodies = mockMessagesEndpoint('wf-42')
     const settleSubmission = vi.spyOn(
@@ -4602,6 +4604,8 @@ describe('AgentPanelRoot workflow binding', () => {
     await userEvent.paste('build me a workflow')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
 
+    canvasStore.linearMode = true
+    useAgentPanelStore().close('close_button')
     unmount()
     accept()
     await waitFor(() =>

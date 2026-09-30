@@ -24,6 +24,7 @@ import { mockWorkspaceList } from '@e2e/fixtures/utils/workspaceMocks'
  * billing capabilities for the selected workspace, and a no-op session refresh.
  */
 interface WorkspaceSwitchTokenGate {
+  arm: () => void
   requestReceived: Promise<void>
   release: () => void
 }
@@ -109,6 +110,7 @@ export const workspaceSwitcherTest = comfyPageFixture.extend<{
     await use(new WorkspaceAuthHelper(page))
   },
   workspaceSwitchTokenGate: async ({ page }, use) => {
+    let armed = false
     let markRequestReceived: () => void = () => {}
     const requestReceived = new Promise<void>((resolve) => {
       markRequestReceived = resolve
@@ -121,7 +123,7 @@ export const workspaceSwitcherTest = comfyPageFixture.extend<{
       const requestBody = route.request().postDataJSON() as {
         workspace_id?: string
       }
-      if (requestBody.workspace_id !== 'ws-team') {
+      if (!armed || requestBody.workspace_id !== 'ws-team') {
         await route.fallback()
         return
       }
@@ -147,6 +149,9 @@ export const workspaceSwitcherTest = comfyPageFixture.extend<{
 
     try {
       await use({
+        arm: () => {
+          armed = true
+        },
         requestReceived,
         release: releaseToken
       })

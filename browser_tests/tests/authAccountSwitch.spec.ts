@@ -61,6 +61,27 @@ const IDENTITY_SENTINELS = {
   }
 } as const
 
+const IDENTITY_STATES = [
+  {
+    userId: ACCOUNT_A.uid,
+    workspaceId: TEAM_WORKSPACE.id,
+    threadId: IDENTITY_SENTINELS.a.thread,
+    transcript: IDENTITY_SENTINELS.a.transcript,
+    bindingId: IDENTITY_SENTINELS.a.binding,
+    tabPath: `workflows/${IDENTITY_SENTINELS.a.draft}.json`,
+    draftName: IDENTITY_SENTINELS.a.draft
+  },
+  {
+    userId: ACCOUNT_B.uid,
+    workspaceId: TEAM_WORKSPACE.id,
+    threadId: IDENTITY_SENTINELS.b.thread,
+    transcript: IDENTITY_SENTINELS.b.transcript,
+    bindingId: IDENTITY_SENTINELS.b.binding,
+    tabPath: `workflows/${IDENTITY_SENTINELS.b.draft}.json`,
+    draftName: IDENTITY_SENTINELS.b.draft
+  }
+] as const
+
 interface FirebasePasswordSignInResponse {
   kind: 'identitytoolkit#VerifyPasswordResponse'
   localId: string
@@ -151,25 +172,7 @@ test.describe('Cloud account switch', { tag: '@cloud' }, () => {
     test.setTimeout(60_000)
     const comfyPage = new ComfyPage(page, request)
     const agentPanel = new AgentPanel(page)
-    const accountAIdentity = {
-      userId: ACCOUNT_A.uid,
-      workspaceId: TEAM_WORKSPACE.id,
-      threadId: IDENTITY_SENTINELS.a.thread,
-      transcript: IDENTITY_SENTINELS.a.transcript,
-      bindingId: IDENTITY_SENTINELS.a.binding,
-      tabPath: `workflows/${IDENTITY_SENTINELS.a.draft}.json`,
-      draftName: IDENTITY_SENTINELS.a.draft
-    }
-    const accountBIdentity = {
-      userId: ACCOUNT_B.uid,
-      workspaceId: TEAM_WORKSPACE.id,
-      threadId: IDENTITY_SENTINELS.b.thread,
-      transcript: IDENTITY_SENTINELS.b.transcript,
-      bindingId: IDENTITY_SENTINELS.b.binding,
-      tabPath: `workflows/${IDENTITY_SENTINELS.b.draft}.json`,
-      draftName: IDENTITY_SENTINELS.b.draft
-    }
-    const identityStates = [accountAIdentity, accountBIdentity]
+    const identityStates = [...IDENTITY_STATES]
 
     await new CloudWorkspaceMockHelper(page).setup([
       ...DEFAULT_TEAM_MEMBERS,
@@ -418,10 +421,6 @@ test.describe('Cloud account switch', { tag: '@cloud' }, () => {
       expect(credentialEvents.indexOf(`session:${ACCOUNT_B.id}`)).toBeLessThan(
         credentialEvents.indexOf(`workspace:${ACCOUNT_B.id}`)
       )
-      await page.reload({ waitUntil: 'domcontentloaded' })
-      await comfyPage.waitForAppReady()
-      await identityPersistence.seed([accountBIdentity])
-      await page.reload({ waitUntil: 'domcontentloaded' })
       await comfyPage.waitForAppReady()
       await expect(
         page.getByRole('tab', {
@@ -539,26 +538,7 @@ test.describe('Cloud cross-tab sign-out', { tag: '@cloud' }, () => {
     identityPersistence
   }) => {
     test.setTimeout(90_000)
-    const identityStates = [
-      {
-        userId: ACCOUNT_A.uid,
-        workspaceId: TEAM_WORKSPACE.id,
-        threadId: IDENTITY_SENTINELS.a.thread,
-        transcript: IDENTITY_SENTINELS.a.transcript,
-        bindingId: IDENTITY_SENTINELS.a.binding,
-        tabPath: `workflows/${IDENTITY_SENTINELS.a.draft}.json`,
-        draftName: IDENTITY_SENTINELS.a.draft
-      },
-      {
-        userId: ACCOUNT_B.uid,
-        workspaceId: TEAM_WORKSPACE.id,
-        threadId: IDENTITY_SENTINELS.b.thread,
-        transcript: IDENTITY_SENTINELS.b.transcript,
-        bindingId: IDENTITY_SENTINELS.b.binding,
-        tabPath: `workflows/${IDENTITY_SENTINELS.b.draft}.json`,
-        draftName: IDENTITY_SENTINELS.b.draft
-      }
-    ]
+    const identityStates = [...IDENTITY_STATES]
     await identityPersistence.mockAgentApi(identityStates)
     await identityPersistence.seedAtStartup(identityStates)
     await bootSignedIn(page)

@@ -333,6 +333,7 @@ describe('workflowDraftStoreV2', () => {
       expect(ok).toBe(false)
 
       expect(reportErrorMock).toHaveBeenCalledWith(expect.any(Error), {
+        surface: 'graph',
         errorType: 'storage_quota_exhausted',
         level: 'warning',
         tags: { store: 'workflowDraftStoreV2' },

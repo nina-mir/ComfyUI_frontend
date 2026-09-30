@@ -15,6 +15,7 @@ import type {
 } from '@/platform/workflow/persistence/base/draftTypes'
 import { StorageKeys } from '@/platform/workflow/persistence/base/storageKeys'
 import { unsafeStorageScope } from '@/platform/workflow/persistence/testUtils/storageScope'
+import type { ComfyWorkflowJSON } from '@/platform/workflow/validation/schemas/workflowSchema'
 import { scopedOnboardingKey } from '@/workbench/extensions/agent/composables/agent/useOnboarding'
 
 import { jsonRoute } from '@e2e/fixtures/utils/jsonRoute'
@@ -161,17 +162,18 @@ export class IdentityPersistenceHelper {
           }
         }
       }
+      const graph = {
+        last_node_id: 0,
+        last_link_id: 0,
+        nodes: [],
+        links: [],
+        groups: [],
+        config: {},
+        extra: { identitySentinel: sentinel.draftName },
+        version: 0.4
+      } satisfies ComfyWorkflowJSON
       const payload: DraftPayloadV2 = {
-        data: JSON.stringify({
-          last_node_id: 0,
-          last_link_id: 0,
-          nodes: [],
-          links: [],
-          groups: [],
-          config: {},
-          extra: { identitySentinel: sentinel.draftName },
-          version: 0.4
-        }),
+        data: JSON.stringify(graph),
         updatedAt
       }
       entries.push(

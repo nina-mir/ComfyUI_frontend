@@ -132,6 +132,7 @@ test.describe('Local workspace switcher', { tag: '@auth' }, () => {
         new URL(request.url()).pathname.endsWith('/api/prompt')
     )
 
+    workspaceSwitchTokenGate.arm()
     await page
       .getByTestId('workspace-switcher-panel')
       .getByText(TEAM_WORKSPACE_NAME, { exact: true })

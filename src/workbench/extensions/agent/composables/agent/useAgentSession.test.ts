@@ -436,9 +436,22 @@ describe('useAgentSession (v1 composition root)', () => {
     session.stop()
   })
 
-  it.for(['success', 'failure'] as const)(
-    "ignores owner A's delayed stop %s after owner B takes over",
-    async (outcome) => {
+  it.for([
+    {
+      outcome: 'success',
+      settle: (resolve: (accepted: AgentCancelAccepted) => void) =>
+        resolve({ status: 'cancelling' })
+    },
+    {
+      outcome: 'failure',
+      settle: (
+        _resolve: (accepted: AgentCancelAccepted) => void,
+        reject: (error: Error) => void
+      ) => reject(new Error('account A delayed failure'))
+    }
+  ])(
+    "ignores owner A's delayed stop $outcome after owner B takes over",
+    async ({ settle }) => {
       let settleCancellation:
         | ((accepted: AgentCancelAccepted) => void)
         | undefined
@@ -462,11 +475,9 @@ describe('useAgentSession (v1 composition root)', () => {
       setStorageIdentity('user-b')
       setStorageWorkspaceId('personal')
 
-      if (outcome === 'success') {
-        settleCancellation?.({ status: 'cancelling' })
-      } else {
-        rejectCancellation?.(new Error('account A delayed failure'))
-      }
+      if (settleCancellation === undefined || rejectCancellation === undefined)
+        throw new Error('cancel request did not expose settlement callbacks')
+      settle(settleCancellation, rejectCancellation)
       await pendingStop
 
       expect(telemetry.trackAgentStopClicked).not.toHaveBeenCalled()
@@ -930,6 +941,7 @@ describe('useAgentSession (v1 composition root)', () => {
     await session.answerAsk('turn-1:call-1', 'run')
 
     expect(reportError).toHaveBeenCalledWith(expect.any(AgentApiError), {
+      surface: 'agent',
       errorType: 'agent_ask_answer_failed'
     })
     expect(session.notices.value).toEqual([
@@ -3485,6 +3497,7 @@ describe('app:agent_error telemetry (TEL-8)', () => {
     await session.sendMessage('make me a cat')
 
     expect(reportError).toHaveBeenCalledWith(expect.any(AgentApiError), {
+      surface: 'agent',
       errorType: 'agent_send_message_failed'
     })
   })
