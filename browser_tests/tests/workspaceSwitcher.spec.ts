@@ -284,7 +284,6 @@ test.describe('Workspace switcher', { tag: '@cloud' }, () => {
         )
         await identityPersistence.seed(identityStates)
         await comfyPage.workflow.reloadAndWaitForApp()
-        await page.keyboard.press('Escape')
       })
 
       await test.step('Establish the personal workspace state', async () => {
