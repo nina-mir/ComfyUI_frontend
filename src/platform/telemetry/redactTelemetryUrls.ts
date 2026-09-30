@@ -269,7 +269,9 @@ function redactError(
     if ('cause' in properties) {
       output.cause = redactValue(properties.cause, context, depth + 1)
     }
-    if (typeof properties.name === 'string') output.name = properties.name
+    if (typeof properties.name === 'string') {
+      output.name = redactTelemetryUrls(properties.name)
+    }
     if (typeof properties.stack === 'string') {
       output.stack = redactTelemetryUrls(properties.stack)
     }

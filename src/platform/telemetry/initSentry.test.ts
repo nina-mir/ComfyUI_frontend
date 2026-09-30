@@ -98,7 +98,7 @@ it('redacts URL secrets from events, breadcrumbs, and spans', () => {
   expect(
     options?.beforeSendSpan?.(
       fromPartial({
-        data: { source: secretUrl },
+        data: { source: secretUrl, sources: [secretUrl, 'safe'] },
         description: `GET ${secretUrl}`,
         span_id: '1234567890abcdef',
         start_timestamp: 1,
@@ -107,6 +107,9 @@ it('redacts URL secrets from events, breadcrumbs, and spans', () => {
     )
   ).toMatchObject({
     description: 'GET https://example.com/model.glb',
-    data: { source: 'https://example.com/model.glb' }
+    data: {
+      source: 'https://example.com/model.glb',
+      sources: ['https://example.com/model.glb', 'safe']
+    }
   })
 })

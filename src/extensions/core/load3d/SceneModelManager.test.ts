@@ -6,7 +6,11 @@ import { createRendererViewState } from '@/renderer/three/sharedWebGLRenderer'
 
 import { DEFAULT_MODEL_CAPABILITIES } from './ModelAdapter'
 import type { ModelAdapterCapabilities } from './ModelAdapter'
-import { SceneModelManager } from './SceneModelManager'
+import {
+  cloneObject3DResources,
+  disposeObject3D,
+  SceneModelManager
+} from './SceneModelManager'
 import type { EventManagerInterface } from './interfaces'
 
 function createMockEventManager(): EventManagerInterface {
@@ -106,6 +110,40 @@ function createPointsModel(name = 'TestModel'): THREE.Group {
   group.add(points)
   return group
 }
+
+describe('line resource ownership', () => {
+  it.for([
+    {
+      name: 'Line',
+      createLine: (geometry: THREE.BufferGeometry, material: THREE.Material) =>
+        new THREE.Line(geometry, material)
+    },
+    {
+      name: 'LineLoop',
+      createLine: (geometry: THREE.BufferGeometry, material: THREE.Material) =>
+        new THREE.LineLoop(geometry, material)
+    },
+    {
+      name: 'LineSegments',
+      createLine: (geometry: THREE.BufferGeometry, material: THREE.Material) =>
+        new THREE.LineSegments(geometry, material)
+    }
+  ])('$name clones and disposes geometry and material', ({ createLine }) => {
+    const sourceGeometry = new THREE.BufferGeometry()
+    const sourceMaterial = new THREE.LineBasicMaterial()
+    const line = createLine(sourceGeometry, sourceMaterial)
+
+    cloneObject3DResources(line)
+
+    expect(line.geometry).not.toBe(sourceGeometry)
+    expect(line.material).not.toBe(sourceMaterial)
+    const geometryDispose = vi.spyOn(line.geometry, 'dispose')
+    const materialDispose = vi.spyOn(line.material, 'dispose')
+    disposeObject3D(line, new Set())
+    expect(geometryDispose).toHaveBeenCalledOnce()
+    expect(materialDispose).toHaveBeenCalledOnce()
+  })
+})
 
 describe('SceneModelManager', () => {
   describe('constructor', () => {

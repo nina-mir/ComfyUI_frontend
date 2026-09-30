@@ -14,6 +14,18 @@ import type {
   UpDirection
 } from './interfaces'
 
+type ResourceRenderable = THREE.Mesh | THREE.Points | THREE.Line
+
+function isResourceRenderable(
+  object: THREE.Object3D
+): object is ResourceRenderable {
+  return (
+    object instanceof THREE.Mesh ||
+    object instanceof THREE.Points ||
+    object instanceof THREE.Line
+  )
+}
+
 export function disposeObject3D(
   object: THREE.Object3D,
   preservedMaterials: THREE.Material | ReadonlySet<THREE.Material>,
@@ -24,13 +36,13 @@ export function disposeObject3D(
       ? preservedMaterials
       : new Set([preservedMaterials])
   object.traverse((child) => {
-    if (!(child instanceof THREE.Mesh || child instanceof THREE.Points)) return
-    child.geometry?.dispose()
+    if (!isResourceRenderable(child)) return
+    child.geometry.dispose()
     const materials = Array.isArray(child.material)
       ? child.material
       : [child.material]
     for (const material of materials) {
-      if (!material || preserved.has(material)) continue
+      if (preserved.has(material)) continue
       for (const [, texture] of materialTextures(material)) {
         if (!preservedTextures.has(texture)) {
           texture.dispose()
@@ -65,7 +77,7 @@ function cloneMaterialResources(material: THREE.Material): THREE.Material {
 /** Give a cloned renderable graph independent ownership of GPU resources. */
 export function cloneObject3DResources(object: THREE.Object3D): void {
   object.traverse((child) => {
-    if (!(child instanceof THREE.Mesh || child instanceof THREE.Points)) return
+    if (!isResourceRenderable(child)) return
     child.geometry = child.geometry.clone()
     child.material = Array.isArray(child.material)
       ? child.material.map(cloneMaterialResources)

@@ -74,5 +74,7 @@ describe('generateModelThumbnail deferred createLoad3d import', () => {
     await expect(next).resolves.toEqual({ status: 'cancelled' })
     expect(load3dModule.create).not.toHaveBeenCalled()
     load3dModule.importReady.resolve()
+    await vi.runAllTimersAsync()
+    expect(load3dModule.create).not.toHaveBeenCalled()
   })
 })

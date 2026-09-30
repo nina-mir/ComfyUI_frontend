@@ -28,7 +28,7 @@ function redactedCopy(error: unknown): Error {
   // `cause` is deliberately not propagated: Sentry's linkedErrorsIntegration
   // walks it by default and would re-leak the unscrubbed original.
   const redacted = new Error(redactTelemetryUrls(source.message))
-  redacted.name = source.name
+  redacted.name = redactTelemetryUrls(source.name)
   if (source.stack) redacted.stack = redactTelemetryUrls(source.stack)
   return redacted
 }

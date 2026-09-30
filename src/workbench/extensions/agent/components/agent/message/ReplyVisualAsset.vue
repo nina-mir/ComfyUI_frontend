@@ -3,7 +3,7 @@ import { cn } from '@comfyorg/tailwind-utils'
 
 import type { ReplyVisualAsset } from '../../../utils/replyAssets'
 
-defineProps<{
+const { asset, multi, modelThumbnailSrc } = defineProps<{
   asset: ReplyVisualAsset
   multi: boolean
   modelThumbnailSrc: string

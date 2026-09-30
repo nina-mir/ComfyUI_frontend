@@ -161,7 +161,8 @@ describe('redactTelemetryValues', () => {
     const error = new Error(
       'failed https://user:secret@example.com/a.glb?token=x'
     )
-    error.name = 'AssetLoadError'
+    error.name =
+      'AssetLoadError https://user:secret@example.com/name?token=private'
     Object.defineProperty(error, 'stack', {
       configurable: true,
       value: 'at load (https://user:secret@example.com/load.js?token=x:1:2)',
@@ -187,7 +188,7 @@ describe('redactTelemetryValues', () => {
       throw new Error('Expected redacted Error')
     }
     expect(redacted.error.message).toBe('failed https://example.com/a.glb')
-    expect(redacted.error.name).toBe('AssetLoadError')
+    expect(redacted.error.name).toBe('AssetLoadError https://example.com/name')
     expect(redacted.error.stack).toBe(
       'at load (https://example.com/load.js:1:2)'
     )
@@ -222,8 +223,14 @@ describe('redactTelemetryValues', () => {
 
     let redacted: unknown = redactTelemetryValues(root)
     for (let depth = 0; depth < 32; depth++) {
-      expect(redacted).toBeTypeOf('object')
-      redacted = (redacted as Record<string, unknown>).next
+      if (
+        typeof redacted !== 'object' ||
+        redacted === null ||
+        !('next' in redacted)
+      ) {
+        throw new Error(`Expected object with next at depth ${depth}`)
+      }
+      redacted = redacted.next
     }
     expect(redacted).toBe('[Redacted]')
   })

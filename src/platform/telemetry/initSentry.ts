@@ -75,6 +75,11 @@ export function initSentry({
       for (const [key, value] of Object.entries(span.data)) {
         if (typeof value === 'string') {
           span.data[key] = redactTelemetryUrls(value)
+        } else if (
+          Array.isArray(value) &&
+          value.every((item): item is string => typeof item === 'string')
+        ) {
+          span.data[key] = value.map(redactTelemetryUrls)
         }
       }
       return span

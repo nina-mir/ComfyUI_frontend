@@ -189,7 +189,7 @@ function loadModelThumbnail(
     })
     .catch(() => {
       if (!mounted || !owns(url, controller)) return
-      scheduleThumbnailRetry(url, filename, attempts)
+      scheduleThumbnailRetry(url, filename, attempts, busyAttempts)
     })
 }
 

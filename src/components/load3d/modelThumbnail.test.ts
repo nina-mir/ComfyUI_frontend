@@ -190,14 +190,13 @@ describe('generateModelThumbnail', () => {
   })
 
   it('redacts credentials from protocol-relative URLs before reporting', async () => {
+    const failure = new Error(
+      'Could not load //user:secret@example.com/model.glb?token=private'
+    )
+    failure.name =
+      'AssetLoadError https://user:secret@example.com/name?token=private'
     const instance = mockInstance({
-      loadModel: vi
-        .fn()
-        .mockRejectedValue(
-          new Error(
-            'Could not load //user:secret@example.com/model.glb?token=private'
-          )
-        )
+      loadModel: vi.fn().mockRejectedValue(failure)
     })
     createLoad3d.mockReturnValue(instance)
 
@@ -207,7 +206,8 @@ describe('generateModelThumbnail', () => {
     )
 
     expect(reportError.mock.calls[0][0]).toMatchObject({
-      message: 'Could not load //example.com/model.glb'
+      message: 'Could not load //example.com/model.glb',
+      name: 'AssetLoadError https://example.com/name'
     })
     expect(reportError.mock.calls[0][0].stack).not.toContain('secret')
     expect(reportError.mock.calls[0][0].stack).not.toContain('private')

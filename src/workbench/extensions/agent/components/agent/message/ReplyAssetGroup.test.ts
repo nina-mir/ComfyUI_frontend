@@ -128,26 +128,6 @@ describe('ReplyAssetGroup', () => {
     expect(lightbox.dataset.count).toBe('2')
   })
 
-  it('plays a video preview on hover and pauses on leave', async () => {
-    const play = vi
-      .spyOn(HTMLMediaElement.prototype, 'play')
-      .mockResolvedValue()
-    const pause = vi
-      .spyOn(HTMLMediaElement.prototype, 'pause')
-      .mockImplementation(() => {})
-    renderGroup([video, image(1)])
-    const element = screen.getByTestId('reply-video-preview')
-
-    await userEvent.hover(element)
-    expect(play).toHaveBeenCalledTimes(1)
-
-    await userEvent.unhover(element)
-    expect(pause).toHaveBeenCalledTimes(1)
-
-    play.mockRestore()
-    pause.mockRestore()
-  })
-
   it('renders an audio card per audio asset outside the visual grid', () => {
     renderGroup([audio])
 

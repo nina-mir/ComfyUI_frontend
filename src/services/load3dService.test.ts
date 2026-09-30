@@ -587,14 +587,20 @@ describe('load3dService', () => {
       await useLoad3dService().copyLoad3dState(source, target)
       await useLoad3dService().copyLoad3dState(source, target)
 
-      const firstMesh = firstClone.children[0] as THREE.Mesh<
-        THREE.BoxGeometry,
-        THREE.MeshStandardMaterial[]
-      >
-      const secondMesh = secondClone.children[0] as THREE.Mesh<
-        THREE.BoxGeometry,
-        THREE.MeshStandardMaterial[]
-      >
+      const firstMesh = firstClone.children[0]
+      const secondMesh = secondClone.children[0]
+      if (!(firstMesh instanceof THREE.Mesh)) {
+        throw new Error('Expected the first clone child to be a mesh')
+      }
+      if (!(secondMesh instanceof THREE.Mesh)) {
+        throw new Error('Expected the second clone child to be a mesh')
+      }
+      if (!Array.isArray(firstMesh.material)) {
+        throw new Error('Expected the first clone to keep a material array')
+      }
+      if (!Array.isArray(secondMesh.material)) {
+        throw new Error('Expected the second clone to keep a material array')
+      }
       expect(firstMesh.geometry).not.toBe(geometry)
       expect(secondMesh.geometry).not.toBe(geometry)
       expect(secondMesh.geometry).not.toBe(firstMesh.geometry)
@@ -611,6 +617,26 @@ describe('load3dService', () => {
       firstMesh.material.forEach((material) => material.dispose())
       expect(secondMesh.geometry).not.toBe(firstMesh.geometry)
       expect(secondMesh.material).not.toContain(firstMesh.material[0])
+    })
+
+    it('gives copied line primitives independent geometry and material ownership', async () => {
+      const geometry = new THREE.BufferGeometry()
+      const material = new THREE.LineBasicMaterial()
+      const sourceModel = new THREE.Group()
+      const clone = new THREE.Group()
+      clone.add(new THREE.LineSegments(geometry, material))
+      const source = makeSource({ currentModel: sourceModel })
+      const { target } = makeTarget()
+      skeletonCloneMock.mockReturnValueOnce(clone)
+
+      await useLoad3dService().copyLoad3dState(source, target)
+
+      const line = clone.children[0]
+      if (!(line instanceof THREE.LineSegments)) {
+        throw new Error('Expected the copied child to be line segments')
+      }
+      expect(line.geometry).not.toBe(geometry)
+      expect(line.material).not.toBe(material)
     })
 
     it('copies originalModel, material mode, up direction, and applied texture from source to target', async () => {
