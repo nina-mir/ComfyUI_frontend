@@ -418,7 +418,10 @@ describe('load3dService', () => {
       })
       const modelManager: TargetState['modelManager'] & {
         setupModelMaterials: ReturnType<typeof vi.fn>
-        copyAppliedTexture: (texture: THREE.Texture) => void
+        borrowAppliedTexture: (
+          texture: THREE.Texture,
+          takeOwnership: boolean
+        ) => void
       } = {
         currentModel: existingModel,
         originalModel: null,
@@ -426,8 +429,8 @@ describe('load3dService', () => {
         currentUpDirection: 'original',
         appliedTexture: null,
         setupModelMaterials: vi.fn(),
-        copyAppliedTexture(texture: THREE.Texture) {
-          this.appliedTexture = texture.clone()
+        borrowAppliedTexture(texture: THREE.Texture) {
+          this.appliedTexture = texture
         }
       }
       const animationManager = {

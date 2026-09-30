@@ -250,15 +250,9 @@ export class SceneModelManager implements ModelManagerInterface {
     })
   }
 
-  borrowAppliedTexture(texture: THREE.Texture): void {
+  borrowAppliedTexture(texture: THREE.Texture, takeOwnership = false): void {
     if (this.ownsAppliedTexture) this.appliedTexture?.dispose()
-    ;[this.appliedTexture, this.ownsAppliedTexture] = [texture, false]
-  }
-
-  copyAppliedTexture(texture: THREE.Texture): void {
-    if (this.ownsAppliedTexture) this.appliedTexture?.dispose()
-    this.appliedTexture = texture.clone()
-    this.ownsAppliedTexture = true
+    ;[this.appliedTexture, this.ownsAppliedTexture] = [texture, takeOwnership]
   }
 
   private appliedTexturesToPreserve(): ReadonlySet<THREE.Texture> {

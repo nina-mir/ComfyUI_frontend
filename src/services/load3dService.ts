@@ -257,7 +257,9 @@ class Load3dService {
 
         const appliedTexture = source.getModelManager().appliedTexture
         if (appliedTexture) {
-          target.getModelManager().copyAppliedTexture(appliedTexture)
+          target
+            .getModelManager()
+            .borrowAppliedTexture(appliedTexture.clone(), true)
         }
 
         target.setMaterialMode(source.getModelManager().materialMode)
