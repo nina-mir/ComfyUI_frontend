@@ -4,6 +4,7 @@ import type * as THREE from 'three'
 
 import type Load3d from '@/extensions/core/load3d/Load3d'
 import type { createLoad3d as createLoad3dContract } from '@/extensions/core/load3d/createLoad3d'
+import { reportError } from '@/platform/telemetry/reportError'
 import { generateModelThumbnail } from './modelThumbnail'
 
 type ThumbnailLoad3d = Pick<Load3d, 'loadModel' | 'captureThumbnail' | 'remove'>
@@ -22,8 +23,8 @@ vi.mock(import('@/extensions/core/load3d/createLoad3d'), () => ({
   createLoad3d
 }))
 
-const reportError = vi.hoisted(() => vi.fn())
-vi.mock(import('@/platform/telemetry/reportError'), () => ({ reportError }))
+vi.mock(import('@/platform/telemetry/reportError'))
+const reportErrorMock = vi.mocked(reportError)
 
 const releaseSharedRenderer = vi.hoisted(() => vi.fn())
 vi.mock(import('@/renderer/three/sharedWebGLRenderer'), { spy: true })
@@ -52,11 +53,6 @@ function deferred<T>(): {
 
 describe('generateModelThumbnail', () => {
   beforeEach(() => {
-    createLoad3d.mockReset()
-    isAssetPreviewSupported.mockReset().mockReturnValue(false)
-    persistThumbnail.mockReset()
-    reportError.mockReset()
-    releaseSharedRenderer.mockReset()
     vi.mocked(acquireSharedRenderer).mockReturnValue({
       renderer: fromPartial<THREE.WebGLRenderer>({}),
       release: releaseSharedRenderer
@@ -129,7 +125,7 @@ describe('generateModelThumbnail', () => {
     })
     expect(stalled.remove).toHaveBeenCalledOnce()
     expect(vi.getTimerCount()).toBe(0)
-    expect(reportError).not.toHaveBeenCalled()
+    expect(reportErrorMock).not.toHaveBeenCalled()
     expect(releaseSharedRenderer).not.toHaveBeenCalled()
     pendingLoad.resolve('cancelled')
     await vi.advanceTimersByTimeAsync(0)
@@ -185,7 +181,7 @@ describe('generateModelThumbnail', () => {
     await expect(
       generateModelThumbnail('/broken.glb', 'broken.glb')
     ).resolves.toEqual({ status: 'failed' })
-    expect(reportError).toHaveBeenCalledWith(
+    expect(reportErrorMock).toHaveBeenCalledWith(
       expect.objectContaining({
         message: 'failed https://example.com/model.glb'
       }),
@@ -205,7 +201,7 @@ describe('generateModelThumbnail', () => {
     await expect(
       generateModelThumbnail('/unknown.bin', 'unknown.bin')
     ).resolves.toEqual({ status: 'failed' })
-    expect(reportError).toHaveBeenCalledOnce()
+    expect(reportErrorMock).toHaveBeenCalledOnce()
   })
 
   it('reports renderer acquisition failures as a failed result', async () => {
@@ -216,7 +212,7 @@ describe('generateModelThumbnail', () => {
     await expect(
       generateModelThumbnail('/model.glb', 'model.glb')
     ).resolves.toEqual({ status: 'failed' })
-    expect(reportError).toHaveBeenCalledOnce()
+    expect(reportErrorMock).toHaveBeenCalledOnce()
     expect(createLoad3d).not.toHaveBeenCalled()
   })
 
@@ -236,12 +232,14 @@ describe('generateModelThumbnail', () => {
       'model.glb'
     )
 
-    expect(reportError.mock.calls[0][0]).toMatchObject({
+    const [reportedError] = reportErrorMock.mock.calls[0]
+    if (!(reportedError instanceof Error)) throw new Error('Expected an Error')
+    expect(reportedError).toMatchObject({
       message: 'Could not load //example.com/model.glb',
       name: 'AssetLoadError https://example.com/name'
     })
-    expect(reportError.mock.calls[0][0].stack).not.toContain('secret')
-    expect(reportError.mock.calls[0][0].stack).not.toContain('private')
+    expect(reportedError.stack).not.toContain('secret')
+    expect(reportedError.stack).not.toContain('private')
   })
 
   it('runs generations one at a time', async () => {
@@ -342,7 +340,7 @@ describe('generateModelThumbnail', () => {
       dataUrl: 'data:image/png;base64,thumb'
     })
     expect(stuck.remove).toHaveBeenCalledTimes(1)
-    expect(reportError).not.toHaveBeenCalled()
+    expect(reportErrorMock).not.toHaveBeenCalled()
     expect(next.loadModel).toHaveBeenCalledWith('/next.glb', undefined, {
       silent: true
     })
@@ -370,7 +368,7 @@ describe('generateModelThumbnail', () => {
       dataUrl: 'data:image/png;base64,thumb'
     })
     expect(stuck.remove).toHaveBeenCalledOnce()
-    expect(reportError).not.toHaveBeenCalled()
+    expect(reportErrorMock).not.toHaveBeenCalled()
     expect(next.captureThumbnail).toHaveBeenCalledOnce()
     pendingCapture.resolve('data:image/png;base64,late')
     await vi.advanceTimersByTimeAsync(0)

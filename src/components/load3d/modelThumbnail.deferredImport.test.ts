@@ -35,15 +35,13 @@ vi.mock(import('@/platform/assets/utils/assetPreviewUtil'), () => ({
   persistThumbnail: vi.fn()
 }))
 
-vi.mock(import('@/platform/telemetry/reportError'), () => ({
-  reportError: vi.fn()
-}))
+vi.mock(import('@/platform/telemetry/reportError'))
 
 import { generateModelThumbnail } from './modelThumbnail'
 
 describe('generateModelThumbnail deferred createLoad3d import', () => {
   beforeEach(() => {
-    load3dModule.create.mockReset().mockReturnValue(
+    load3dModule.create.mockReturnValue(
       fromPartial<Load3d>({
         loadModel: vi.fn().mockResolvedValue('loaded'),
         captureThumbnail: vi
