@@ -405,9 +405,7 @@ useEventListener(
     const to = historyIndex(event.state)
     if (from === undefined || to === undefined || from === to) return
     if (
-      globalThis.window.confirm(
-        t('workshop.run.leavePage', {}, { locale: locale })
-      )
+      globalThis.window.confirm(t('workshop.run.leavePage', {}, { locale }))
     ) {
       protectedHistoryIndex.value = to
       approvedTraversal = true
@@ -893,7 +891,7 @@ function useInCode() {
     >
       <div
         role="tablist"
-        :aria-label="t('workshop.title', {}, { locale: locale })"
+        :aria-label="t('workshop.title', {}, { locale })"
         class="scrollbar-hide flex min-w-0 gap-8 overflow-x-auto max-sm:gap-5"
         data-testid="model-tabs"
         @keydown="onTabKeydown"
@@ -918,7 +916,7 @@ function useInCode() {
           "
           @click="activeSection = section"
         >
-          {{ t(sectionLabel[section], {}, { locale: locale }) }}
+          {{ t(sectionLabel[section], {}, { locale }) }}
         </button>
       </div>
       <a
@@ -928,7 +926,7 @@ function useInCode() {
         data-testid="model-studio-link"
       >
         <Clapperboard class="size-4" aria-hidden="true" />
-        {{ t('workshop.cinematic.openInStudio', {}, { locale: locale }) }}
+        {{ t('workshop.cinematic.openInStudio', {}, { locale }) }}
       </a>
       <a
         v-if="docsHref"
@@ -943,7 +941,7 @@ function useInCode() {
         "
         data-testid="model-docs-link"
       >
-        {{ t('workshop.hub.docs', {}, { locale: locale }) }}
+        {{ t('workshop.hub.docs', {}, { locale }) }}
         <ExternalLink class="size-4" aria-hidden="true" />
       </a>
     </div>
@@ -963,7 +961,7 @@ function useInCode() {
         <header
           class="flex items-center justify-between border-b border-transparency-white-t8 px-5 py-3 text-xs font-bold tracking-wider text-primary-comfy-canvas uppercase"
         >
-          <span>{{ t('workshop.input.title', {}, { locale: locale }) }}</span>
+          <span>{{ t('workshop.input.title', {}, { locale }) }}</span>
           <button
             v-if="
               model.execution &&
@@ -976,7 +974,7 @@ function useInCode() {
             class="cursor-pointer rounded-sm px-2 py-1 hover:bg-transparency-white-t8 disabled:cursor-not-allowed"
             @click="nativeJson = !nativeJson"
           >
-            {{ t('workshop.form.nativeJson', {}, { locale: locale }) }}
+            {{ t('workshop.form.nativeJson', {}, { locale }) }}
           </button>
         </header>
 
@@ -1006,7 +1004,7 @@ function useInCode() {
             role="status"
             class="text-sm text-primary-warm-gray"
           >
-            {{ t('workshop.form.draftRestoreFailed', {}, { locale: locale }) }}
+            {{ t('workshop.form.draftRestoreFailed', {}, { locale }) }}
           </p>
         </div>
 
@@ -1025,7 +1023,7 @@ function useInCode() {
             data-gate="signedOut"
             @click="leaveForSignIn($event, signInHref)"
           >
-            {{ t('workshop.run.signIn', {}, { locale: locale }) }}
+            {{ t('workshop.run.signIn', {}, { locale }) }}
           </Button>
           <!-- The MVP rail (DES-1015): buying happens on platform, in a new
                tab, so this page and its inputs stay alive and the return is a
@@ -1042,7 +1040,7 @@ function useInCode() {
                   {
                     workspace: session?.workspace.name ?? ''
                   },
-                  { locale: locale }
+                  { locale }
                 )
               }}
             </p>
@@ -1053,13 +1051,13 @@ function useInCode() {
               data-gate="noCredits"
               @click="requestWorkshopBuyCredits"
             >
-              {{ t('workshop.run.buyCredits', {}, { locale: locale }) }}
+              {{ t('workshop.run.buyCredits', {}, { locale }) }}
             </Button>
           </template>
           <template v-else-if="gate === 'memberNoCredits'">
             <div class="mb-2 flex flex-col gap-1" data-testid="gate-note">
               <p class="text-sm font-bold text-content-secondary">
-                {{ t('workshop.error.creditsTitle', {}, { locale: locale }) }}
+                {{ t('workshop.error.creditsTitle', {}, { locale }) }}
               </p>
               <p class="text-xs text-content-secondary">
                 {{
@@ -1068,7 +1066,7 @@ function useInCode() {
                     {
                       workspace: session?.workspace.name ?? ''
                     },
-                    { locale: locale }
+                    { locale }
                   )
                 }}
               </p>
@@ -1088,7 +1086,7 @@ function useInCode() {
                     ? 'workshop.run.preparingSession'
                     : 'workshop.run.switchPersonal',
                   {},
-                  { locale: locale }
+                  { locale }
                 )
               }}
             </Button>
@@ -1097,7 +1095,7 @@ function useInCode() {
               class="text-xs text-red-400"
               role="alert"
             >
-              {{ t('nav.workspaceSwitchError', {}, { locale: locale }) }}
+              {{ t('nav.workspaceSwitchError', {}, { locale }) }}
             </p>
           </template>
           <p
@@ -1105,13 +1103,13 @@ function useInCode() {
             class="flex min-h-14 flex-wrap items-center justify-center gap-x-1.5 px-2 text-center text-xs text-content-secondary sm:text-sm"
             data-testid="run-rollout-note"
           >
-            {{ t('workshop.run.rollingOut', {}, { locale: locale }) }}
+            {{ t('workshop.run.rollingOut', {}, { locale }) }}
             <button
               type="button"
               class="cursor-pointer font-bold text-primary-warm-white underline underline-offset-2 hover:text-primary-comfy-yellow"
               @click="activeSection = 'api'"
             >
-              {{ t('workshop.run.rollingOutApi', {}, { locale: locale }) }}
+              {{ t('workshop.run.rollingOutApi', {}, { locale }) }}
             </button>
           </p>
           <Button
@@ -1129,7 +1127,7 @@ function useInCode() {
               t(
                 isRunning ? 'workshop.run.cancel' : 'workshop.run.run',
                 {},
-                { locale: locale }
+                { locale }
               )
             }}
           </Button>
@@ -1141,7 +1139,7 @@ function useInCode() {
             data-testid="run-button"
             :data-gate="gate"
           >
-            {{ t(blockedRunLabel, {}, { locale: locale }) }}
+            {{ t(blockedRunLabel, {}, { locale }) }}
           </Button>
         </div>
       </div>
@@ -1160,7 +1158,7 @@ function useInCode() {
           :locale
           :policy-message="
             refusesRealFaces(model.slug)
-              ? t('workshop.error.policyRealFaces', {}, { locale: locale })
+              ? t('workshop.error.policyRealFaces', {}, { locale })
               : undefined
           "
           :member-workspace="
@@ -1183,7 +1181,7 @@ function useInCode() {
             class="text-xs text-primary-warm-gray"
             data-testid="output-expires"
           >
-            {{ t('workshop.output.expires', {}, { locale: locale }) }}
+            {{ t('workshop.output.expires', {}, { locale }) }}
           </p>
           <!-- The id is for the rare conversation with support, so it keeps
             to itself and the copy comes to hand when the reader reaches for
@@ -1193,13 +1191,13 @@ function useInCode() {
               class="text-2xs break-all text-primary-warm-gray/70"
               data-testid="router-request-id"
             >
-              {{ t('workshop.run.requestId', {}, { locale: locale }) }}
+              {{ t('workshop.run.requestId', {}, { locale }) }}
               {{ requestId }}
             </p>
             <CopyTextButton
               :value="requestId"
-              :label="t('workshop.run.copyRequestId', {}, { locale: locale })"
-              :copied-label="t('workshop.api.copied', {}, { locale: locale })"
+              :label="t('workshop.run.copyRequestId', {}, { locale })"
+              :copied-label="t('workshop.api.copied', {}, { locale })"
               icon-class="size-3.5"
               class="h-7 min-w-7 rounded-lg px-1.5 transition-opacity can-hover:opacity-0 can-hover:group-focus-within/request:opacity-100 can-hover:group-hover/request:opacity-100"
             />
@@ -1227,7 +1225,7 @@ function useInCode() {
           data-testid="clone-button"
         >
           <Download class="size-3.5" aria-hidden="true" />
-          {{ t('workshop.workflow.cloneCta', {}, { locale: locale }) }}
+          {{ t('workshop.workflow.cloneCta', {}, { locale }) }}
         </a>
       </div>
     </section>

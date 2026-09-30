@@ -35,7 +35,7 @@ const hasMore = computed(() => apps.length > ROW_LIMIT)
         @click="browseAll = false"
       >
         <ChevronLeft class="size-4" aria-hidden="true" />
-        {{ t('workshop.sections.back', {}, { locale: locale }) }}
+        {{ t('workshop.sections.back', {}, { locale }) }}
       </button>
       <h2
         class="mt-3 mb-4 scroll-mt-24 text-3xl font-bold text-primary-warm-white sm:text-4xl lg:scroll-mt-32"

@@ -26,7 +26,7 @@ const {
     <span
       class="text-xs font-bold tracking-widest text-primary-warm-gray uppercase"
     >
-      {{ t('workshop.api.needs', {}, { locale: locale }) }}
+      {{ t('workshop.api.needs', {}, { locale }) }}
     </span>
     <p class="text-lg font-semibold text-primary-warm-white">{{ where }}</p>
     <div class="h-px bg-transparency-white-t8"></div>

@@ -56,7 +56,7 @@ const tabClass = (tab: CatalogueTab) =>
       )
     "
     :role="links ? undefined : 'group'"
-    :aria-label="t('workshop.catalogue.show', {}, { locale: locale })"
+    :aria-label="t('workshop.catalogue.show', {}, { locale })"
     data-testid="catalogue-tabs"
   >
     <div :class="cn('pointer-events-none absolute inset-1 grid', columns)">
@@ -73,7 +73,7 @@ const tabClass = (tab: CatalogueTab) =>
         :data-testid="`catalogue-tab-${tab}`"
         :class="tabClass(tab)"
       >
-        {{ t(labels[tab], {}, { locale: locale }) }}
+        {{ t(labels[tab], {}, { locale }) }}
       </a>
       <button
         v-else
@@ -83,7 +83,7 @@ const tabClass = (tab: CatalogueTab) =>
         :class="tabClass(tab)"
         @click="active = tab"
       >
-        {{ t(labels[tab], {}, { locale: locale }) }}
+        {{ t(labels[tab], {}, { locale }) }}
       </button>
     </template>
   </component>

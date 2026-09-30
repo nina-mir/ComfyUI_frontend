@@ -24,7 +24,7 @@ const emit = defineEmits<{ choose: [id: string] }>()
 <template>
   <div
     role="radiogroup"
-    :aria-label="tc(group.title, {}, { locale: locale })"
+    :aria-label="tc(group.title, {}, { locale })"
     class="grid grid-cols-2 gap-x-4 gap-y-5"
   >
     <slot />
@@ -72,7 +72,7 @@ const emit = defineEmits<{ choose: [id: string] }>()
       <span
         class="truncate px-1 text-sm text-primary-comfy-canvas group-hover:text-primary-warm-white"
       >
-        {{ tc(option.label, {}, { locale: locale }) }}
+        {{ tc(option.label, {}, { locale }) }}
       </span>
     </button>
   </div>

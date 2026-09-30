@@ -19,9 +19,7 @@ const { locale = 'en', class: customClass = '' } = defineProps<{
 
 const { downloadUrl, platform, showFallback } = useDownloadUrl()
 
-const label = computed(() =>
-  t('download.hero.downloadLocal', {}, { locale: locale })
-)
+const label = computed(() => t('download.hero.downloadLocal', {}, { locale }))
 
 const ICONS: Record<Platform, string> = {
   windows: '/icons/os/windows.svg',

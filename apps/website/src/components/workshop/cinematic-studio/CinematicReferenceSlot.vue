@@ -20,11 +20,9 @@ const file = defineModel<StudioImage | undefined>()
 const preview = useImagePreview(() => file.value)
 const input = useTemplateRef<HTMLInputElement>('input')
 
-const label = computed(() =>
-  tc(REFERENCE_SLOTS[kind].label, {}, { locale: locale })
-)
+const label = computed(() => tc(REFERENCE_SLOTS[kind].label, {}, { locale }))
 const accessibleName = computed(() => {
-  const action = tc(REFERENCE_SLOTS[kind].action, {}, { locale: locale })
+  const action = tc(REFERENCE_SLOTS[kind].action, {}, { locale })
   return file.value ? `${action}: ${file.value.name}` : action
 })
 
@@ -88,7 +86,7 @@ function choose(event: Event) {
       v-if="file"
       type="button"
       class="absolute top-1.5 right-1.5 grid size-7 place-items-center rounded-lg bg-primary-comfy-ink/70 text-primary-warm-white hover:bg-primary-comfy-ink"
-      :aria-label="tc('cinematic.reference.remove', {}, { locale: locale })"
+      :aria-label="tc('cinematic.reference.remove', {}, { locale })"
       @click="file = undefined"
     >
       <X class="size-3.5" aria-hidden="true" />

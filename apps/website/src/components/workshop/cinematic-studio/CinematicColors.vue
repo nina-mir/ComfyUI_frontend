@@ -15,7 +15,7 @@ const main = defineModel<number | undefined>('main')
 
 const swatches = useTemplateRef<HTMLElement>('swatches')
 
-const t = (key: Parameters<typeof tc>[0]) => tc(key, {}, { locale: locale })
+const t = (key: Parameters<typeof tc>[0]) => tc(key, {}, { locale })
 
 function setColor(index: number, value: string) {
   colors.value = colors.value.map((color, at) => (at === index ? value : color))

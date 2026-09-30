@@ -289,13 +289,13 @@ onUnmounted(() => {
       <h1
         class="mt-6 text-3xl/tight font-light whitespace-pre-line text-primary-comfy-canvas md:text-4xl/tight lg:max-w-2xl lg:text-5xl/tight"
       >
-        {{ t('download.hero.heading', {}, { locale: locale }) }}
+        {{ t('download.hero.heading', {}, { locale }) }}
       </h1>
 
       <p
         class="mt-6 max-w-md text-sm text-primary-comfy-canvas lg:mt-6 lg:text-base"
       >
-        {{ t('download.hero.subtitle', {}, { locale: locale }) }}
+        {{ t('download.hero.subtitle', {}, { locale }) }}
       </p>
 
       <div class="mt-8 flex flex-col gap-4 lg:flex-row lg:items-end">
@@ -312,7 +312,7 @@ onUnmounted(() => {
               class="size-5 icon-mask mask-[url('/icons/social/github.svg')]"
               aria-hidden="true"
             />
-            {{ t('download.hero.installGithub', {}, { locale: locale }) }}
+            {{ t('download.hero.installGithub', {}, { locale }) }}
           </span>
         </BrandButton>
       </div>

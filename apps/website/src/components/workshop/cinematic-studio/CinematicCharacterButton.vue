@@ -18,7 +18,7 @@ const file = defineModel<StudioImage | undefined>()
 const preview = useImagePreview(() => file.value)
 const input = useTemplateRef<HTMLInputElement>('input')
 const action = computed(() => {
-  const label = tc('cinematic.reference.castAction', {}, { locale: locale })
+  const label = tc('cinematic.reference.castAction', {}, { locale })
   return file.value ? `${label}: ${file.value.name}` : label
 })
 
@@ -34,9 +34,7 @@ function choose(event: Event) {
 <template>
   <div class="relative">
     <CinematicTooltip
-      :text="
-        file?.name ?? tc('cinematic.reference.cast', {}, { locale: locale })
-      "
+      :text="file?.name ?? tc('cinematic.reference.cast', {}, { locale })"
     >
       <button
         type="button"
@@ -62,7 +60,7 @@ function choose(event: Event) {
       v-if="file"
       type="button"
       class="absolute -top-1.5 -right-1.5 grid size-4 place-items-center rounded-full bg-primary-warm-white text-primary-comfy-ink hover:bg-primary-comfy-yellow"
-      :aria-label="tc('cinematic.reference.remove', {}, { locale: locale })"
+      :aria-label="tc('cinematic.reference.remove', {}, { locale })"
       @click="file = undefined"
     >
       <X class="size-2.5" aria-hidden="true" />

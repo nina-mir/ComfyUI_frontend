@@ -85,7 +85,7 @@ const selectedIn = (part: DirectionPart) =>
         class="h-9 self-end rounded-xl bg-primary-warm-white px-4 text-sm font-semibold text-primary-comfy-ink hover:bg-primary-warm-white/90"
         @click="editing = false"
       >
-        {{ tc('cinematic.grade.done', {}, { locale: locale }) }}
+        {{ tc('cinematic.grade.done', {}, { locale }) }}
       </button>
     </div>
     <template v-else>

@@ -126,11 +126,11 @@ whenever(
       >
         <SplitReveal
           v-if="tab === section"
-          :text="t(subtitle, {}, { locale: locale })"
+          :text="t(subtitle, {}, { locale })"
           :delay="260"
           :stagger="50"
         />
-        <template v-else>{{ t(subtitle, {}, { locale: locale }) }}</template>
+        <template v-else>{{ t(subtitle, {}, { locale }) }}</template>
       </p>
     </div>
   </div>

@@ -98,7 +98,7 @@ const useCaseOptions = computed<FacetMenuOption[]>(() => {
   const counts = countByUseCase(models)
   return USE_CASES.filter((value) => counts[value] > 0).map((value) => ({
     value,
-    label: t(useCaseLabelKey[value], {}, { locale: locale }),
+    label: t(useCaseLabelKey[value], {}, { locale }),
     count: counts[value]
   }))
 })
@@ -222,7 +222,7 @@ watch(browseAll, (on) => on && resetFilters())
         @click="leaveSection"
       >
         <ChevronLeft class="size-4" aria-hidden="true" />
-        {{ t('workshop.sections.back', {}, { locale: locale }) }}
+        {{ t('workshop.sections.back', {}, { locale }) }}
       </button>
 
       <!-- scroll-mt tracks the nav height; the toolbar's is lower because its py-4 absorbs the difference -->
@@ -231,7 +231,7 @@ watch(browseAll, (on) => on && resetFilters())
         ref="heading"
         class="mt-3 mb-4 scroll-mt-24 text-3xl font-bold text-primary-warm-white sm:text-4xl lg:scroll-mt-32"
       >
-        {{ t(sectionTitleKey, {}, { locale: locale }) }}
+        {{ t(sectionTitleKey, {}, { locale }) }}
         <span class="text-base font-normal text-primary-warm-gray tabular-nums">
           {{ visible.length }}
         </span>
@@ -290,7 +290,7 @@ watch(browseAll, (on) => on && resetFilters())
           data-testid="browse-all-end"
           @click="browseAll = true"
         >
-          {{ t('workshop.sections.browseAll', {}, { locale: locale }) }}
+          {{ t('workshop.sections.browseAll', {}, { locale }) }}
           <ChevronRight
             class="size-4 transition-transform group-hover:translate-x-0.5"
             aria-hidden="true"
@@ -301,7 +301,7 @@ watch(browseAll, (on) => on && resetFilters())
       <template v-else>
         <div v-if="visible.length">
           <h2 id="workshop-models-heading" class="sr-only">
-            {{ t('workshop.models.heading', {}, { locale: locale }) }}
+            {{ t('workshop.models.heading', {}, { locale }) }}
           </h2>
           <ul
             class="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
@@ -324,10 +324,10 @@ watch(browseAll, (on) => on && resetFilters())
           data-testid="workshop-empty"
         >
           <p class="text-lg font-semibold text-primary-comfy-canvas">
-            {{ t('workshop.empty.heading', {}, { locale: locale }) }}
+            {{ t('workshop.empty.heading', {}, { locale }) }}
           </p>
           <p class="text-sm text-primary-warm-gray">
-            {{ t('workshop.empty.body', {}, { locale: locale }) }}
+            {{ t('workshop.empty.body', {}, { locale }) }}
           </p>
           <Button
             v-if="isFiltered"
@@ -335,7 +335,7 @@ watch(browseAll, (on) => on && resetFilters())
             size="sm"
             @click="clearFilters"
           >
-            {{ t('workshop.empty.clear', {}, { locale: locale }) }}
+            {{ t('workshop.empty.clear', {}, { locale }) }}
           </Button>
         </div>
       </template>

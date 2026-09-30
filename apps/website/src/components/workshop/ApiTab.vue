@@ -210,22 +210,22 @@ const facts = computed(() => [
   ...(contract
     ? [
         {
-          label: t('workshop.api.needsEndpoint', {}, { locale: locale }),
+          label: t('workshop.api.needsEndpoint', {}, { locale }),
           value: `POST /v2/models/${contract.id}`,
           mono: true
         }
       ]
     : []),
   {
-    label: t('workshop.api.needsKey', {}, { locale: locale }),
+    label: t('workshop.api.needsKey', {}, { locale }),
     value: 'COMFY_API_KEY',
     mono: true
   },
   ...(showLocalFilesFact.value
     ? [
         {
-          label: t('workshop.api.needsFiles', {}, { locale: locale }),
-          value: t('workshop.api.filesRead', {}, { locale: locale })
+          label: t('workshop.api.needsFiles', {}, { locale }),
+          value: t('workshop.api.filesRead', {}, { locale })
         }
       ]
     : [])
@@ -235,8 +235,8 @@ const facts = computed(() => [
 <template>
   <section class="flex flex-col gap-6" data-testid="api-tab">
     <SectionHeading
-      :title="t('workshop.api.heading', {}, { locale: locale })"
-      :subtitle="t('workshop.api.body', {}, { locale: locale })"
+      :title="t('workshop.api.heading', {}, { locale })"
+      :subtitle="t('workshop.api.body', {}, { locale })"
     />
 
     <div class="flex flex-col gap-8 lg:flex-row-reverse lg:items-start">
@@ -252,10 +252,10 @@ const facts = computed(() => [
           data-testid="api-get-key"
           @click="emit('getKey')"
         >
-          {{ t('workshop.api.getKey', {}, { locale: locale }) }}
+          {{ t('workshop.api.getKey', {}, { locale }) }}
         </Button>
         <ApiFacts
-          :where="t('workshop.api.runsOnRouter', {}, { locale: locale })"
+          :where="t('workshop.api.runsOnRouter', {}, { locale })"
           :rows="facts"
           :locale="locale"
         />
@@ -271,7 +271,7 @@ const facts = computed(() => [
           >
             <div
               role="tablist"
-              :aria-label="t('workshop.api.heading', {}, { locale: locale })"
+              :aria-label="t('workshop.api.heading', {}, { locale })"
               class="flex gap-1"
               @keydown="onLanguageKeydown"
             >
@@ -300,8 +300,8 @@ const facts = computed(() => [
             </div>
             <CopyTextButton
               :value="snippet"
-              :label="t('workshop.api.copy', {}, { locale: locale })"
-              :copied-label="t('workshop.api.copied', {}, { locale: locale })"
+              :label="t('workshop.api.copy', {}, { locale })"
+              :copied-label="t('workshop.api.copied', {}, { locale })"
               @click="emit('copy', language)"
             />
           </div>
@@ -316,7 +316,7 @@ const facts = computed(() => [
                   ? 'workshop.api.filesOmitted'
                   : 'workshop.api.localFiles',
                 {},
-                { locale: locale }
+                { locale }
               )
             }}
           </p>
@@ -340,7 +340,7 @@ const facts = computed(() => [
                 ? 'workshop.api.mappingUnavailable'
                 : 'workshop.api.inputInvalid',
               {},
-              { locale: locale }
+              { locale }
             )
           }}
         </p>
@@ -352,7 +352,7 @@ const facts = computed(() => [
           class="inline-flex min-h-11 items-center gap-2 self-start text-sm font-medium text-primary-comfy-yellow hover:text-primary-warm-white"
           data-testid="api-docs"
         >
-          {{ t('workshop.api.docs', {}, { locale: locale }) }}
+          {{ t('workshop.api.docs', {}, { locale }) }}
           <span aria-hidden="true">↗</span>
         </a>
       </div>

@@ -87,10 +87,7 @@ const modelOptions = computed(() =>
     id: model.slug,
     label: model.name,
     logo: model.logo,
-    meta: videoTags(
-      model.video,
-      tc('cinematic.video.audioTag', {}, { locale: locale })
-    )
+    meta: videoTags(model.video, tc('cinematic.video.audioTag', {}, { locale }))
   }))
 )
 const model = computed(() =>
@@ -98,9 +95,7 @@ const model = computed(() =>
 )
 const slots = computed(() => referenceSlots(model.value, !!firstFrame.value))
 const blockedNote = computed(() =>
-  blocked
-    ? tc(blocked.key, { model: blocked.model }, { locale: locale })
-    : undefined
+  blocked ? tc(blocked.key, { model: blocked.model }, { locale }) : undefined
 )
 const canGenerate = computed(
   () => gate === 'ready' && scene.value.trim().length > 0 && !blockedNote.value
@@ -112,23 +107,23 @@ const cardClass =
 
 <template>
   <aside
-    :aria-label="tc('cinematic.panel.label', {}, { locale: locale })"
+    :aria-label="tc('cinematic.panel.label', {}, { locale })"
     class="flex min-w-0 flex-col rounded-2xl border border-transparency-white-t8 bg-transparency-white-t4"
   >
     <header
       class="border-b border-transparency-white-t8 px-5 py-3 text-xs font-bold tracking-wider text-primary-comfy-canvas uppercase"
     >
-      {{ t('workshop.input.title', {}, { locale: locale }) }}
+      {{ t('workshop.input.title', {}, { locale }) }}
     </header>
     <div class="flex flex-col gap-5 p-4">
       <section class="flex flex-col gap-2">
         <h2 :class="labelClass">
-          {{ tc('cinematic.model.heading', {}, { locale: locale }) }}
+          {{ tc('cinematic.model.heading', {}, { locale }) }}
         </h2>
         <CinematicMenu
           v-model="modelSlug"
           :options="modelOptions"
-          :heading="tc('cinematic.model.heading', {}, { locale: locale })"
+          :heading="tc('cinematic.model.heading', {}, { locale })"
           :show-heading="false"
           side="bottom"
           :trigger-class="cn(cardClass, 'h-11 gap-3 px-3')"
@@ -158,7 +153,7 @@ const cardClass =
       </CinematicSceneField>
       <section class="flex flex-col gap-2">
         <h2 :class="labelClass">
-          {{ tc('cinematic.section.shot', {}, { locale: locale }) }}
+          {{ tc('cinematic.section.shot', {}, { locale }) }}
         </h2>
         <CinematicShotList
           :direction
@@ -171,10 +166,10 @@ const cardClass =
       <section v-if="video" class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <h2 :class="labelClass">
-            {{ tc('cinematic.section.references', {}, { locale: locale }) }}
+            {{ tc('cinematic.section.references', {}, { locale }) }}
           </h2>
           <span class="text-xs text-primary-warm-gray">
-            {{ tc('cinematic.reference.optional', {}, { locale: locale }) }}
+            {{ tc('cinematic.reference.optional', {}, { locale }) }}
           </span>
         </div>
         <div class="grid grid-cols-2 gap-2">
@@ -201,7 +196,7 @@ const cardClass =
       </section>
       <section class="flex flex-col gap-2">
         <h2 :class="labelClass">
-          {{ tc('cinematic.section.output', {}, { locale: locale }) }}
+          {{ tc('cinematic.section.output', {}, { locale }) }}
         </h2>
         <CinematicVideoControls
           v-if="video"
